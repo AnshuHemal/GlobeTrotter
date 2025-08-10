@@ -164,7 +164,7 @@ const SignupPage = () => {
 
       if (response?.data?.success) {
         toast.success("Account created successfully!");
-        navigate("/create-profile/welcome");
+        navigate("/");
       } else {
         toast.error("Failed to create account.");
       }

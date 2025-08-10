@@ -49,7 +49,7 @@ const App = () => {
                   <DashboardPage />
                 </ProtectedRoute>
               ) : (
-                <DashboardPage />
+                <LoginPage />
               )
             }
           ></Route>

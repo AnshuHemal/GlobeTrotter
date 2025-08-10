@@ -10,7 +10,7 @@ from django.conf import settings
 from django.db import models
 from django.shortcuts import render
 from Auth.models import (
-    User
+    User, Otp
 )
 from Auth.decorators import verify_token
 from Auth.decorators import verify_token
@@ -187,3 +187,68 @@ def current_user(request):
     }
     
     return Response(data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def send_otp(request):
+    email = request.data.get("email")
+    if not email:
+        return Response({"success": False, "message": "Email is required"}, status=400)
+
+    try:
+        if User.objects(email=email).first():
+            return Response(
+                {"success": False, "message": "Account already exists.."},
+                status=400,
+            )
+
+        otp_code = str(random.randint(100000, 999999))
+
+        # Optional: Delete existing OTPs for the email to avoid duplicates
+        Otp.objects(email=email).delete()
+
+        Otp(email=email, code=otp_code).save()
+        send_otp_email(email, otp_code)
+
+        return Response(
+            {"success": True, "message": "OTP sent to your email.."},
+            status=status.HTTP_201_CREATED,
+        )
+    except Exception as e:
+        return Response(
+            {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["POST"])
+def verify_otp(request):
+    email = request.data.get("email")
+    code = request.data.get("code")
+
+    if not email or not code:
+        return Response(
+            {"success": False, "message": "Email and code are required"},
+            status=400,
+        )
+
+    try:
+        otp = Otp.objects(email=email, code=code).first()
+        if not otp:
+            return Response(
+                {"success": False, "message": "Invalid or expired OTP"}, status=400
+            )
+
+        otp.delete()
+
+        return Response(
+            {"success": True, "message": "Email verified successfully"},
+            status=200,
+        )
+    except Exception as e:
+        return Response(
+            {
+                "success": False,
+                "message": "OTP verification failed",
+                "error": str(e),
+            },
+            status=500,
+        )

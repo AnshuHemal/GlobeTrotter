@@ -30,3 +30,13 @@ class User(Document):
     lastSeen = DateTimeField(default=timezone.now)
 
     meta = {"collection": "users", "strict": False}
+
+class Otp(Document):
+    email = EmailField(required=True)
+    code = StringField(required=True, max_length=6)
+    createdAt = DateTimeField(default=timezone.now)
+
+    meta = {
+        "collection": "otps",
+        "indexes": ["createdAt"],
+    }
