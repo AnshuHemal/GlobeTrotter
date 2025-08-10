@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/home/anshu/Documents/Git/Odoo Hackathon/.venv/bin/python3.10" "$0" "$@"
-' '''
+#!/home/anshu/Documents/Git/Odoo/.venv/bin/python3.10
 # -*- coding: utf-8 -*-
 import re
 import sys

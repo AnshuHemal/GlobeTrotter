@@ -1,4 +1,4 @@
-#!/home/anshu/Documents/Git/Odoo Hackathon/.venv/bin/python3.10
+#!/home/anshu/Documents/Git/Odoo/.venv/bin/python3.10
 # When the django-admin.py deprecation ends, remove this script.
 import warnings
 

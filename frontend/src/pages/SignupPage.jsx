@@ -18,7 +18,6 @@ const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const [roleSelection, setRoleSelection] = useState("freelancer");
 
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [otpInput, setOtpInput] = useState("");
@@ -158,7 +157,7 @@ const SignupPage = () => {
           fullname,
           email,
           password,
-          role: roleSelection,
+          role: "user",
         },
         { withCredentials: true }
       );
@@ -199,6 +198,12 @@ const SignupPage = () => {
               WebkitOverflowScrolling: "touch",
             }}
           >
+            <h3
+              className="mb-4 display-6 about-one-heading-text text-center"
+              style={{ fontSize: "38px" }}
+            >
+              Let's, - Create Account!
+            </h3>
             <form onSubmit={handleSignUp}>
               <div className="modern-input mb-4">
                 <input
@@ -309,43 +314,6 @@ const SignupPage = () => {
                 </div>
               )}
 
-              <div className="row">
-                <div className="col-md-6">
-                  <div
-                    className={`role-card ${
-                      roleSelection === "freelancer" ? "selected" : ""
-                    }`}
-                    onClick={() => setRoleSelection("freelancer")}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <img
-                      src={freelancer}
-                      alt="freelancer"
-                      className="img-fluid mt-2"
-                      style={{ height: "70px" }}
-                    />
-                    <p className="mt-2">Freelancer</p>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div
-                    className={`role-card ${
-                      roleSelection === "client" ? "selected" : ""
-                    }`}
-                    onClick={() => setRoleSelection("client")}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <img
-                      src={client}
-                      alt="client"
-                      className="img-fluid mt-2"
-                      style={{ height: "70px" }}
-                    />
-                    <p className="mt-2">Client</p>
-                  </div>
-                </div>
-              </div>
-
               <div
                 className="my-3 d-flex justify-content-center align-items-center"
                 style={{ fontSize: "15px" }}
@@ -365,18 +333,9 @@ const SignupPage = () => {
                     rel="noopener noreferrer"
                     style={{ color: "#007674" }}
                   >
-                    Worksyde Terms of Service
-                  </a>
-                  ,{" "}
-                  <a
-                    href="https://example.com/user-agreement"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "#007674" }}
-                  >
-                    User Agreement
-                  </a>
-                  , and{" "}
+                   Terms of Service
+                  </a> {" "}
+                 and{" "}
                   <a
                     href="https://example.com/privacy-policy"
                     target="_blank"
@@ -419,12 +378,7 @@ const SignupPage = () => {
           </div>
 
           <div className="col-lg-6 col-12 d-flex flex-column justify-content-center overflow-x-hidden align-items-center text-center mb-4 mb-lg-0">
-            <h3
-              className="mb-4 display-6 about-one-heading-text text-start"
-              style={{ fontSize: "38px" }}
-            >
-              Let's, - Create Account!
-            </h3>
+            
             <div className="w-100 px-3" style={{ maxWidth: "500px" }}>
               <Lottie animationData={animation} />
             </div>
