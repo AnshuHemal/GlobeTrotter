@@ -1,0 +1,3 @@
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+
+API KEY = "AIzaSyD84wWosXQyqzedoKGIbQbMzGP0wcPj5zE"

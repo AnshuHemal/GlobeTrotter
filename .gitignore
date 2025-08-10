@@ -1,0 +1,85 @@
+# === Python / Django ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+*.log
+*.pot
+*.pyc
+*.pyo
+
+db.sqlite3
+media/
+staticfiles/
+*.sqlite3
+*.db
+
+# Django migrations
+**/migrations/
+!**/migrations/__init__.py
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Virtual environments
+venv/
+python_env/
+env/
+
+# VS Code / PyCharm
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# MyPy / Coverage / PyTest
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# === Node / Frontend ===
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.vite/
+.next/
+out/
+
+# lock files
+yarn.lock
+pnpm-lock.yaml
+package-lock.json
+
+# frontend env files
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# === Logs ===
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+*.orig
