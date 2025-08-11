@@ -1,132 +1,71 @@
-# Python #
-##########
+# Operating System files
+.DS_Store
+Thumbs.db
 
-# Django
-*.log
-*.pot
-*.pyc
-*.pyo
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Python
 __pycache__/
-db.sqlite3
-*.sqlite3
+*.py[cod]
+*.pyo
+*.pyd
+env/
+venv/
+*.env
+*.venv
+*.pip
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+target/
+
+# Ruby
+*.gem
+*.rbc
+.bundle/
+log/
+tmp/
+
+# JavaScript
+/dist
+/build
 *.log
 
-# Virtual Environment
-venv/
-env/
-.venv/
-env.bak/
-venv.bak/
-
-# Django migrations
-**/migrations/*
-!**/migrations/__init__.py
-
-# Coverage reports
-.coverage
-*.cover
-*.coverage.*
-
-# mypy
-.mypy_cache/
-.dmypy.json
-
-# Pytest
-.pytest_cache/
-
-# Flask (if applicable)
-instance/
-.webassets-cache
-
-# Jupyter Notebooks
-.ipynb_checkpoints/
-
-# IDEs and Editors #
-#####################
-
-# VS Code
+# IDEs
 .vscode/
-
-# PyCharm
 .idea/
-
-# Sublime Text
 *.sublime-workspace
 *.sublime-project
 
-# JetBrains
-.idea/
+# Compiled files
+*.exe
+*.out
+*.app
+*.o
+*.a
+*.so
 
-# OS files #
-#############
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
 
-# macOS
-.DS_Store
+# Logs
+*.log
 
-# Windows
-Thumbs.db
-ehthumbs.db
-
-# Node.js #
-###########
-
-# Node modules (React app)
-node_modules/
-
-# Build outputs (React app)
-build/
-dist/
-
-# React Native (if applicable)
-.expo/
-.expo-shared/
-
-# Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# npm (package-lock and yarn.lock)
-package-lock.json
-yarn.lock
-
-# .env files (Sensitive data)
+# Environment variables
 .env
+
+# .env files
 .env.local
 .env.*.local
-.env.production
-.env.development
-.env.test
-
-# MongoDB #
-############
-
-# MongoDB data files
-data/db/
-
-# MongoDB logs
-*.log
-
-# Django migrations database (can be included if using local db for dev)
-*.db
-
-# Other #
-##########
-
-# Editor & IDE specific files
-.idea/
-.vscode/
-*.sublime-project
-*.sublime-workspace
-
-# MacOS specific files
-.DS_Store
-
-# Windows specific files
-Thumbs.db
-
-# Python virtualenv
-.venv/
-
-# Coverage and test reports
-coverage/
