@@ -42,15 +42,23 @@ const Signup = () => {
 
     setLoading(true);
 
-    const result = await signup(formData.name, formData.email, formData.password);
-    
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.error);
+    try {
+      const result = await signup(formData.name, formData.email, formData.password);
+      
+      if (result.success) {
+        // Redirect to verification page with email
+        navigate('/verify-email', { 
+          state: { email: formData.email } 
+        });
+      } else {
+        setError(result.message || 'Registration failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('An error occurred during registration. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (

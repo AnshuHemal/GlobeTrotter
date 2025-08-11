@@ -3,10 +3,17 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.exceptions import ValidationError
-from mongoengine.errors import NotUniqueError, DoesNotExist
+from django.conf import settings
+from mongoengine.errors import NotUniqueError, DoesNotExist, ValidationError as MongoValidationError
 from .models import User
 from .authentication import generate_jwt_token
+from .password_reset import PasswordResetToken, generate_reset_token, send_password_reset_email
+from .email_utils import send_verification_email
 import re
+from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def validate_email(email):
@@ -44,25 +51,44 @@ def signup(request):
                 'message': 'Password must be at least 6 characters long'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Create user
-        user = User(name=name, email=email)
-        user.set_password(password)
-        user.save()
-        
-        # Generate token
-        token = generate_jwt_token(user)
-        
-        return Response({
-            'success': True,
-            'message': 'User created successfully',
-            'token': token,
-            'user': user.to_dict()
-        }, status=status.HTTP_201_CREATED)
+        # Check if user already exists but is unverified
+        try:
+            existing_user = User.objects.get(email=email)
+            if not existing_user.is_verified:
+                # Resend verification email if user exists but isn't verified
+                send_verification_email(existing_user, request)
+                return Response({
+                    'success': True,
+                    'message': 'A verification email has been sent to your email address. Please check your inbox.'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'Email already registered. Please log in instead.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except DoesNotExist:
+            # Create new unverified user
+            user = User(
+                name=name,
+                email=email,
+                is_active=False,
+                is_verified=False
+            )
+            user.set_password(password)
+            user.save()
+            
+            # Send verification email
+            send_verification_email(user, request)
+            
+            return Response({
+                'success': True,
+                'message': 'A verification email has been sent to your email address. Please check your inbox to complete registration.'
+            }, status=status.HTTP_201_CREATED)
         
     except NotUniqueError:
         return Response({
             'success': False,
-            'message': 'Email already exists'
+            'message': 'Email already registered. Please check your email for the verification link or try resetting your password.'
         }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({
@@ -86,7 +112,6 @@ def login(request):
                 'message': 'Email and password are required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Find user
         try:
             user = User.objects.get(email=email)
         except DoesNotExist:
@@ -95,18 +120,25 @@ def login(request):
                 'message': 'Invalid email or password'
             }, status=status.HTTP_401_UNAUTHORIZED)
         
-        # Check password
         if not user.check_password(password):
             return Response({
                 'success': False,
                 'message': 'Invalid email or password'
             }, status=status.HTTP_401_UNAUTHORIZED)
-        
+            
+        if not user.is_verified:
+            # Resend verification email if not verified
+            send_verification_email(user, request)
+            return Response({
+                'success': False,
+                'message': 'Please verify your email address before logging in. A new verification email has been sent.'
+            }, status=status.HTTP_403_FORBIDDEN)
+            
         if not user.is_active:
             return Response({
                 'success': False,
-                'message': 'Account is disabled'
-            }, status=status.HTTP_401_UNAUTHORIZED)
+                'message': 'Account is deactivated. Please contact support.'
+            }, status=status.HTTP_403_FORBIDDEN)
         
         # Generate token
         token = generate_jwt_token(user)
@@ -119,9 +151,10 @@ def login(request):
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
+        logger.error(f"Error in login: {str(e)}", exc_info=True)
         return Response({
             'success': False,
-            'message': 'Login failed'
+            'message': 'An error occurred during login. Please try again.'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -131,13 +164,211 @@ def me(request):
     """Get current user information"""
     try:
         user = request.user
+        user_data = user.to_dict()
+        # Don't expose sensitive information
+        user_data.pop('verification_token', None)
+        user_data.pop('verification_token_expires', None)
+        user_data.pop('password_hash', None)
         return Response({
             'success': True,
-            'user': user.to_dict()
+            'user': user_data
+        })
+    except Exception as e:
+        logger.error(f"Error in me endpoint: {str(e)}", exc_info=True)
+        return Response({
+            'success': False,
+            'message': 'An error occurred while fetching user data.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def verify_email(request):
+    """Verify user's email using the verification token and redirect to frontend with JWT"""
+    token = request.query_params.get('token')
+    
+    if not token:
+        return Response({
+            'success': False,
+            'message': 'Verification token is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Find user by verification token
+        user = User.objects.get(verification_token=token)
+        
+        # Verify the token
+        if user.verify_email(token):
+            # Generate JWT token for the user
+            jwt_token = generate_jwt_token(user)
+            
+            # Get frontend URL from settings
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+            redirect_url = f"{frontend_url}/login?token={jwt_token}&verified=true"
+            
+            # Redirect to frontend with token
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect(redirect_url)
+            
+    except DoesNotExist:
+        # If token is invalid, redirect to login with error message
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        redirect_url = f"{frontend_url}/login?error=invalid_token"
+        from django.http import HttpResponseRedirect
+        return HttpResponseRedirect(redirect_url)
+        
+    except Exception as e:
+        logger.error(f"Error in verify_email: {str(e)}", exc_info=True)
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        redirect_url = f"{frontend_url}/login?error=verification_failed"
+        from django.http import HttpResponseRedirect
+        return HttpResponseRedirect(redirect_url)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def resend_verification_email(request):
+    """Resend verification email to the authenticated user"""
+    try:
+        user = request.user
+        
+        if user.is_verified:
+            return Response({
+                'success': False,
+                'message': 'Email is already verified.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Generate new verification token
+        user.generate_verification_token()
+        
+        # Send verification email
+        send_verification_email(user, request)
+        
+        return Response({
+            'success': True,
+            'message': 'A new verification email has been sent to your email address.'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in resend_verification_email: {str(e)}", exc_info=True)
+        return Response({
+            'success': False,
+            'message': 'Failed to send verification email. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def forgot_password(request):
+    """Handle forgot password request"""
+    try:
+        email = request.data.get('email', '').strip().lower()
+        
+        if not email or not validate_email(email):
+            return Response({
+                'success': False,
+                'message': 'Please provide a valid email address'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if user exists
+        try:
+            user = User.objects.get(email=email)
+        except DoesNotExist:
+            # For security, don't reveal if email exists or not
+            return Response({
+                'success': True,
+                'message': 'If an account exists with this email, a password reset link has been sent.'
+            }, status=status.HTTP_200_OK)
+        
+        # Generate and save reset token
+        token = generate_reset_token()
+        expires_at = datetime.utcnow() + timedelta(hours=24)
+        
+        # Invalidate any existing tokens
+        PasswordResetToken.objects(email=email, used__exists=False).update(set__used=datetime.utcnow())
+        
+        # Create new token
+        reset_token = PasswordResetToken(
+            email=email,
+            token=token,
+            expires_at=expires_at
+        )
+        reset_token.save()
+        
+        # Send reset email
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+        send_password_reset_email(email, reset_url)
+        
+        return Response({
+            'success': True,
+            'message': 'If an account exists with this email, a password reset link has been sent.'
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
+        print(f"Error in forgot_password: {str(e)}")
         return Response({
             'success': False,
-            'message': 'Failed to get user information'
+            'message': 'An error occurred while processing your request.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reset_password(request):
+    """Reset user password using token"""
+    try:
+        token = request.data.get('token', '').strip()
+        new_password = request.data.get('new_password', '').strip()
+        
+        if not token or not new_password:
+            return Response({
+                'success': False,
+                'message': 'Token and new password are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        if len(new_password) < 6:
+            return Response({
+                'success': False,
+                'message': 'Password must be at least 6 characters long'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Find valid token
+        try:
+            reset_token = PasswordResetToken.objects.get(
+                token=token,
+                used__exists=False,
+                expires_at__gt=datetime.utcnow()
+            )
+        except DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Invalid or expired token. Please request a new password reset.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Find user and update password
+        try:
+            user = User.objects.get(email=reset_token.email)
+            user.set_password(new_password)
+            user.save()
+            
+            # Mark token as used
+            reset_token.used = datetime.utcnow()
+            reset_token.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Password has been reset successfully. You can now log in with your new password.'
+            }, status=status.HTTP_200_OK)
+            
+        except DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'User not found.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        print(f"Error in reset_password: {str(e)}")
+        return Response({
+            'success': False,
+            'message': 'An error occurred while resetting your password.'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

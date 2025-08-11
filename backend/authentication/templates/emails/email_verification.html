@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #4a6fa5;
+            color: white;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4a6fa5;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome to GlobeTrotter!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hello {{ user.name }},</p>
+        
+        <p>Thank you for signing up with GlobeTrotter! To complete your registration, please verify your email address by clicking the button below:</p>
+        
+        <div style="text-align: center;">
+            <a href="{{ verification_url }}" class="button">Verify Email Address</a>
+        </div>
+        
+        <p>Or copy and paste this link into your browser:</p>
+        <p><a href="{{ verification_url }}" style="word-break: break-all;">{{ verification_url }}</a></p>
+        
+        <p>This link will expire in {{ expiry_hours }} hours.</p>
+        
+        <p>If you didn't create an account with GlobeTrotter, you can safely ignore this email.</p>
+        
+        <p>Happy Traveling!<br>The GlobeTrotter Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>&copy; {% now "Y" %} GlobeTrotter. All rights reserved.</p>
+        <p>This is an automated message, please do not reply to this email.</p>
+    </div>
+</body>
+</html>

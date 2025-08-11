@@ -55,26 +55,55 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, token = null) => {
     try {
-      let response;
-      try {
-        // Try new API service first
-        response = await authApi.login(email, password);
-      } catch (apiError) {
-        console.warn('Primary API failed, falling back to direct URL', apiError);
-        // Fallback to direct axios call
-        response = await axios.post('/api/auth/login', { email, password });
+      let userData;
+      
+      if (token) {
+        // If token is provided, use it directly
+        localStorage.setItem('token', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // Fetch user data using the token
+        const response = await axios.get('/api/auth/me');
+        userData = response.data.user || response.data;
+        setUser(userData);
+        return { success: true };
+      } else {
+        // Regular email/password login
+        let response;
+        try {
+          // Try new API service first
+          response = await authApi.login(email, password);
+        } catch (apiError) {
+          console.warn('Primary API failed, falling back to direct URL', apiError);
+          // Fallback to direct axios call
+          response = await axios.post('/api/auth/login', { email, password });
+        }
+        
+        // Handle case where email needs verification
+        if (response.data.message && response.data.message.includes('verify your email')) {
+          return { 
+            success: false, 
+            requiresVerification: true,
+            message: response.data.message 
+          };
+        }
+        
+        const { token: authToken, user } = response.data;
+        
+        localStorage.setItem('token', authToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+        setUser(user);
+        return { success: true };
       }
-      
-      const { token, user } = response.data;
-      
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
-      return { success: true };
     } catch (error) {
       console.error('Login error:', error);
+      // Clear invalid token if present
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+      }
       return { 
         success: false, 
         message: error.response?.data?.message || 'Login failed. Please try again.' 
@@ -94,17 +123,17 @@ export const AuthProvider = ({ children }) => {
         response = await axios.post('/api/auth/signup', { name, email, password });
       }
       
-      const { token, user } = response.data;
-      
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
-      
-      return { success: true };
+      // For email verification, we don't log the user in automatically
+      // Just return success with the message from the server
+      return { 
+        success: true, 
+        message: response.data.message || 'Registration successful! Please check your email to verify your account.'
+      };
     } catch (error) {
+      console.error('Signup error:', error);
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Signup failed' 
+        message: error.response?.data?.message || 'Registration failed. Please try again.' 
       };
     }
   };
@@ -115,17 +144,31 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const resendVerificationEmail = async (email) => {
+    try {
+      await axios.post('/api/auth/resend-verification', { email });
+      return { success: true, message: 'Verification email resent. Please check your inbox.' };
+    } catch (error) {
+      console.error('Error resending verification email:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Failed to resend verification email. Please try again.' 
+      };
+    }
+  };
+
   const value = {
     user,
+    loading,
     login,
     signup,
     logout,
-    loading
+    resendVerificationEmail
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Globe, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Globe, Mail, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import './Auth.css';
 
 const Login = () => {
@@ -11,10 +11,72 @@ const Login = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
   
   const { login } = useAuth();
   const navigate = useNavigate();
+  
+  // Check for token in URL and auto-login if present
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const verified = searchParams.get('verified');
+    
+    if (token) {
+      // Remove token from URL without page reload
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+      
+      // Auto-login with token
+      const autoLogin = async () => {
+        try {
+          setLoading(true);
+          setError('');
+          
+          // Store token in local storage
+          localStorage.setItem('token', token);
+          
+          // Get user profile using the token
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            // Update auth context
+            login(formData.email, formData.password, token);
+            
+            // Show success message if coming from verification
+            if (verified === 'true') {
+              setSuccess('Email verified successfully! Redirecting to dashboard...');
+            }
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 2000);
+          } else {
+            throw new Error('Invalid token');
+          }
+        } catch (err) {
+          console.error('Auto-login error:', err);
+          setError('Invalid or expired verification link. Please log in manually.');
+          localStorage.removeItem('token');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      autoLogin();
+    } else if (searchParams.get('error') === 'invalid_token') {
+      setError('Invalid or expired verification link. Please request a new one.');
+    } else if (searchParams.get('error') === 'verification_failed') {
+      setError('Email verification failed. Please try again or request a new verification email.');
+    }
+  }, [searchParams, navigate, login]);
 
   const handleChange = (e) => {
     setFormData({
@@ -26,17 +88,31 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
-    const result = await login(formData.email, formData.password);
-    
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.error);
+    try {
+      const result = await login(formData.email, formData.password);
+      
+      if (result.success) {
+        navigate('/dashboard');
+      } else if (result.requiresVerification) {
+        // Redirect to verification page with email
+        navigate('/verify-email', { 
+          state: { 
+            email: formData.email,
+            message: result.message || 'Please verify your email before logging in.'
+          } 
+        });
+      } else {
+        setError(result.message || 'Login failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('An error occurred during login. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -53,6 +129,12 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="error-message">{error}</div>}
+          {success && (
+            <div className="success-message">
+              <CheckCircle size={18} style={{ marginRight: '8px' }} />
+              {success}
+            </div>
+          )}
           
           <div className="form-group">
             <label htmlFor="email" className="form-label">
@@ -104,13 +186,22 @@ const Login = () => {
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
+          <div className="form-actions">
+            <div className="remember-me">
+              <input type="checkbox" id="remember" name="remember" />
+              <label htmlFor="remember">Remember me</label>
+            </div>
+            <Link to="/forgot-password" className="text-link">
+              Forgot password?
+            </Link>
+          </div>
         </form>
 
         <div className="auth-footer">
           <p>
             Don't have an account?{' '}
-            <Link to="/signup" className="auth-link">
-              Sign up here
+            <Link to="/signup" className="text-link">
+              Sign up
             </Link>
           </p>
         </div>

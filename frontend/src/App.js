@@ -5,6 +5,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
+import EmailVerificationSuccess from './pages/EmailVerificationSuccess';
 import Dashboard from './pages/Dashboard';
 import BookTrip from './pages/BookTrip';
 import MyTrips from './pages/MyTrips';
@@ -27,6 +31,10 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/verify-email/success" element={<EmailVerificationSuccess />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/shared/:tripId" element={<SharedItinerary />} />
             <Route path="/*" element={
               <ProtectedRoute>

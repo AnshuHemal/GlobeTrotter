@@ -169,4 +169,29 @@ JWT_SECRET_KEY = SECRET_KEY
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_DELTA = 86400  # 24 hours in seconds
 
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Update with your SMTP server
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'  # Update with your email
+EMAIL_HOST_PASSWORD = 'your-app-password'  # Use an App Password for Gmail
+DEFAULT_FROM_EMAIL = 'your-email@gmail.com'  # Update with your email
+
+# Frontend URL for password reset links
+# Frontend URL
+FRONTEND_URL = 'http://localhost:3000'  # Update with your frontend URL
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'trotterglobeofficial@gmail.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'usdl jraa posg glvm'  # Your Gmail App Password
+DEFAULT_FROM_EMAIL = 'GlobeTrotter <trotterglobeofficial@gmail.com>'
+
+# Email verification settings
+EMAIL_VERIFICATION_TIMEOUT_DAYS = 1  # Token expiration in days
+
 # Using MongoEngine for user management instead of Django's built-in User model
