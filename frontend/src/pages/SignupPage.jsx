@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import Lottie from "lottie-react";
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineCamera, AiOutlineUser } from "react-icons/ai";
 import { Link, useNavigate } from "react-router-dom";
-import animation from "../assets/anim.json";
+import animation from "../assets/travel2.mp4";
 import freelancer from "../assets/freelancer.svg";
 import client from "../assets/client.svg";
 import PasswordStrengthMeter from "./PasswordStrengthMeter";
@@ -752,7 +752,7 @@ const SignupPage = () => {
           <div className="col-lg-6 col-12 d-flex flex-column justify-content-center overflow-x-hidden align-items-center text-center mb-4 mb-lg-0">
 
             <div className="w-100 px-3" style={{ maxWidth: "500px" }}>
-              <Lottie animationData={animation} />
+              <video src={animation} loop autoPlay></video>
             </div>
           </div>
         </div>
