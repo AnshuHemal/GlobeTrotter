@@ -6,6 +6,7 @@ from mongoengine.errors import DoesNotExist
 from .models import Destination, City
 from trips.models import Trip
 from authentication.models import User
+from datetime import datetime
 
 
 @api_view(['GET'])
@@ -24,6 +25,56 @@ def get_popular_destinations(request):
         return Response({
             'success': False,
             'message': 'Failed to fetch popular destinations'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_all_places(request):
+    """Get all cities and destinations in a unified format"""
+    try:
+        # Get all cities and format them
+        cities = City.objects.all()
+        formatted_cities = [{
+            'id': str(city.id),
+            'name': city.name,
+            'country': city.country,
+            'type': 'city',
+            'image_url': getattr(city, 'image_url', ''),
+            'description': f"Explore the beautiful city of {city.name}, {city.country}",
+            'average_cost': 0,  # Default value since cities don't have cost
+            'popularity': getattr(city, 'popularity_score', 0),
+            'created_at': city.created_at.isoformat() if hasattr(city, 'created_at') and city.created_at else datetime.utcnow().isoformat()
+        } for city in cities]
+
+        # Get all destinations and format them
+        destinations = Destination.objects.all()
+        formatted_destinations = [{
+            'id': str(dest.id),
+            'name': dest.name,
+            'country': dest.country,
+            'type': 'destination',
+            'image_url': dest.image_url,
+            'description': dest.description,
+            'average_cost': dest.average_cost_per_day,
+            'popularity': dest.popularity_score,
+            'created_at': dest.created_at.isoformat() if dest.created_at else datetime.utcnow().isoformat()
+        } for dest in destinations]
+
+        # Combine and sort by popularity
+        all_places = formatted_cities + formatted_destinations
+        all_places.sort(key=lambda x: x['popularity'], reverse=True)
+
+        return Response({
+            'success': True,
+            'places': all_places
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': 'Failed to fetch places',
+            'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

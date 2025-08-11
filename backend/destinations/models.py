@@ -21,6 +21,9 @@ class Destination(Document):
     # Popular activities
     popular_activities = ListField(StringField(max_length=200))
     
+    # Image
+    image_url = StringField(max_length=500)
+    
     # Statistics
     popularity_score = IntField(default=0)
     visit_count = IntField(default=0)
@@ -52,6 +55,7 @@ class Destination(Document):
             'best_time_to_visit': self.best_time_to_visit,
             'average_cost_per_day': self.average_cost_per_day,
             'popular_activities': self.popular_activities,
+            'image_url': self.image_url,
             'popularity_score': self.popularity_score,
             'visit_count': self.visit_count,
             'created_at': self.created_at.isoformat(),
@@ -78,6 +82,7 @@ class City(Document):
     # Travel info
     attractions = ListField(StringField(max_length=200))
     average_temperature = FloatField()  # in Celsius
+    image_url = StringField(max_length=500, default='')  # URL for city image
     
     # Metadata
     created_at = DateTimeField(default=datetime.utcnow)

@@ -6,12 +6,13 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
-import CreateTrip from './pages/CreateTrip';
+import BookTrip from './pages/BookTrip';
 import MyTrips from './pages/MyTrips';
 import ItineraryBuilder from './pages/ItineraryBuilder';
 import ItineraryView from './pages/ItineraryView';
 import CitySearch from './pages/CitySearch';
 import ActivitySearch from './pages/ActivitySearch';
+import Cities from './pages/Cities';
 import TripBudget from './pages/TripBudget';
 import TripCalendar from './pages/TripCalendar';
 import SharedItinerary from './pages/SharedItinerary';
@@ -35,13 +36,14 @@ function App() {
                   <Routes>
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/create-trip" element={<CreateTrip />} />
+                    <Route path="/book-trip" element={<BookTrip />} />
                     <Route path="/my-trips" element={<MyTrips />} />
                     <Route path="/trip/:tripId/build" element={<ItineraryBuilder />} />
                     <Route path="/trip/:tripId/view" element={<ItineraryView />} />
                     <Route path="/trip/:tripId/budget" element={<TripBudget />} />
                     <Route path="/trip/:tripId/calendar" element={<TripCalendar />} />
                     <Route path="/cities" element={<CitySearch />} />
+                    <Route path="/explore" element={<Cities />} />
                     <Route path="/activities" element={<ActivitySearch />} />
                     <Route path="/profile" element={<UserProfile />} />
                     <Route path="/admin" element={<AdminDashboard />} />

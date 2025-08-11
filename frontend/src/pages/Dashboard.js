@@ -92,15 +92,6 @@ const Dashboard = () => {
           </div>
           <div className="stat-card">
             <div className="stat-icon">
-              <DollarSign className="icon-warning" />
-            </div>
-            <div className="stat-content">
-              <h3>${stats.totalBudget?.toLocaleString() || 0}</h3>
-              <p>Total Budget</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">
               <Globe className="icon-info" />
             </div>
             <div className="stat-content">
@@ -162,7 +153,7 @@ const Dashboard = () => {
                 <MapPin size={48} />
                 <h3>No trips yet</h3>
                 <p>Start planning your first adventure!</p>
-                <Link to="/create-trip" className="btn btn-primary">
+                <Link to="/book-trip" className="btn btn-primary">
                   <PlusCircle size={20} />
                   Create Your First Trip
                 </Link>
@@ -183,8 +174,8 @@ const Dashboard = () => {
               {popularDestinations.slice(0, 6).map((destination) => (
                 <div key={destination.id} className="destination-card">
                   <div className="destination-image">
-                    {destination.image ? (
-                      <img src={destination.image} alt={destination.name} />
+                    {destination.image_url ? (
+                      <img src={destination.image_url} alt={destination.name} />
                     ) : (
                       <div className="destination-placeholder">
                         <Globe size={24} />
@@ -197,11 +188,11 @@ const Dashboard = () => {
                     <div className="destination-stats">
                       <span>
                         <Users size={14} />
-                        {destination.popularity || 0} travelers
+                        {destination.popularity_score || 0} travelers
                       </span>
                       <span>
                         <TrendingUp size={14} />
-                        ${destination.avgCost || 0}/day
+                        ${destination.average_cost_per_day || 0}/day
                       </span>
                     </div>
                   </div>

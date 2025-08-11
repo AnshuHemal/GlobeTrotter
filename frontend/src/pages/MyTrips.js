@@ -171,72 +171,78 @@ const MyTrips = () => {
           <div className="trips-grid">
             {filteredTrips.map((trip) => {
               const status = getTripStatus(trip);
+              const duration = Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / (1000 * 60 * 60 * 24)) + ' days';
+              
               return (
-                <div key={trip.id} className="trip-card">
-                  <div className="trip-image">
-                    {trip.coverImage ? (
-                      <img src={trip.coverImage} alt={trip.name} />
-                    ) : (
-                      <div className="trip-placeholder">
-                        <MapPin size={32} />
+                <div key={trip.id} className="trip-card-modern">
+                  <div className="trip-card-header">
+                    <div className="trip-image-modern">
+                      {trip.coverImage ? (
+                        <img src={trip.coverImage} alt={trip.name} />
+                      ) : (
+                        <div className="trip-placeholder-modern">
+                          <MapPin size={32} />
+                        </div>
+                      )}
+                      <div 
+                        className="trip-status-badge"
+                        style={{ 
+                          backgroundColor: getStatusColor(status),
+                          color: status === 'upcoming' ? '#1E40AF' : status === 'ongoing' ? '#166534' : '#1F2937'
+                        }}
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
                       </div>
-                    )}
-                    <div 
-                      className="trip-status"
-                      style={{ backgroundColor: getStatusColor(status) }}
-                    >
-                      {status}
                     </div>
                   </div>
 
-                  <div className="trip-content">
-                    <h3>{trip.name}</h3>
-                    <p className="trip-description">{trip.description}</p>
-                    
-                    <div className="trip-meta">
-                      <div className="meta-item">
-                        <Calendar size={16} />
-                        <span>
-                          {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                      
-                      <div className="meta-item">
+                  <div className="trip-card-body">
+                    <div className="trip-title-section">
+                      <h3 className="trip-title">{trip.name}</h3>
+                      <div className="trip-location">
                         <MapPin size={16} />
-                        <span>{trip.destinationCount || 0} destinations</span>
+                        <span>{trip.destination || 'No destination set'}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="trip-details">
+                      <div className="trip-detail-item">
+                        <Calendar size={16} />
+                        <div className="detail-content">
+                          <span className="detail-label">Duration</span>
+                          <span className="detail-value">{duration}</span>
+                        </div>
                       </div>
                       
-                      <div className="meta-item">
+                      <div className="trip-detail-item">
                         <DollarSign size={16} />
-                        <span>${trip.budget?.toLocaleString() || 0}</span>
+                        <div className="detail-content">
+                          <span className="detail-label">Budget</span>
+                          <span className="detail-value">
+                            ${trip.budget?.toLocaleString() || '0'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="trip-actions">
-                      <Link 
-                        to={`/trip/${trip.id}/view`} 
-                        className="btn btn-secondary btn-sm"
-                        title="View Trip"
-                      >
+                    
+                    <div className="trip-actions-modern">
+                      <Link to={`/trip/${trip.id}/view`} className="btn btn-outline">
                         <Eye size={16} />
-                        View
+                        <span>View</span>
                       </Link>
-                      <Link 
-                        to={`/trip/${trip.id}/build`} 
-                        className="btn btn-primary btn-sm"
-                        title="Edit Trip"
-                      >
+                      <Link to={`/trip/${trip.id}/edit`} className="btn btn-primary">
                         <Edit3 size={16} />
-                        Edit
+                        <span>Edit</span>
                       </Link>
-                      <button 
-                        onClick={() => deleteTrip(trip.id)}
-                        className="btn btn-danger btn-sm"
-                        title="Delete Trip"
-                      >
-                        <Trash2 size={16} />
-                      </button>
                     </div>
+                    
+                    <button 
+                      onClick={() => deleteTrip(trip.id)}
+                      className="btn-delete"
+                      aria-label="Delete trip"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               );
