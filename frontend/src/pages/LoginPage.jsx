@@ -67,8 +67,14 @@ const LoginPage = () => {
           style={{ maxWidth: "1200px" }}
         >
           <div className="col-lg-6 col-12 d-flex flex-column justify-content-center overflow-x-hidden align-items-center text-center mb-4 mb-lg-0">
-            <video src={animation} loop autoPlay></video>
-          </div>
+  <video 
+    src={animation} 
+    loop 
+    autoPlay 
+    style={{ width: "100%", height: "auto", objectFit: "contain" }} 
+  ></video>
+</div>
+
 
           <div
             className="col-lg-6 col-12 p-3 d-flex flex-column"
