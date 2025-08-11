@@ -1,85 +1,132 @@
-# === Python / Django ===
-__pycache__/
-*.py[cod]
-*$py.class
+# Python #
+##########
 
+# Django
 *.log
 *.pot
 *.pyc
 *.pyo
-
+__pycache__/
 db.sqlite3
-media/
-staticfiles/
 *.sqlite3
-*.db
+*.log
+
+# Virtual Environment
+venv/
+env/
+.venv/
+env.bak/
+venv.bak/
 
 # Django migrations
-**/migrations/
+**/migrations/*
 !**/migrations/__init__.py
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Virtual environments
-venv/
-python_env/
-env/
-
-# VS Code / PyCharm
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# MyPy / Coverage / PyTest
-.mypy_cache/
+# Coverage reports
 .coverage
-.coverage.*
-coverage.xml
-htmlcov/
+*.cover
+*.coverage.*
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# Pytest
 .pytest_cache/
 
-# OS files
+# Flask (if applicable)
+instance/
+.webassets-cache
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# IDEs and Editors #
+#####################
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# JetBrains
+.idea/
+
+# OS files #
+#############
+
+# macOS
 .DS_Store
+
+# Windows
 Thumbs.db
 ehthumbs.db
-Desktop.ini
 
-# === Node / Frontend ===
+# Node.js #
+###########
+
+# Node modules (React app)
 node_modules/
-dist/
+
+# Build outputs (React app)
 build/
+dist/
+
+# React Native (if applicable)
+.expo/
+.expo-shared/
+
+# Log files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
-.vite/
-.next/
-out/
 
-# lock files
-yarn.lock
-pnpm-lock.yaml
+# npm (package-lock and yarn.lock)
 package-lock.json
+yarn.lock
 
-# frontend env files
-*.env.local
-*.env.development.local
-*.env.test.local
-*.env.production.local
+# .env files (Sensitive data)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.test
 
-# === Logs ===
+# MongoDB #
+############
+
+# MongoDB data files
+data/db/
+
+# MongoDB logs
 *.log
-logs/
-*.pid
-*.seed
-*.pid.lock
 
-# Temporary files
-*.tmp
-*.swp
-*.bak
-*.orig
+# Django migrations database (can be included if using local db for dev)
+*.db
+
+# Other #
+##########
+
+# Editor & IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# MacOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
+
+# Python virtualenv
+.venv/
+
+# Coverage and test reports
+coverage/
