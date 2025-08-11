@@ -7,7 +7,8 @@ const Header = ({ activeTab = "home" }) => {
     <nav className="navbar navbar-expand-lg fixed-top">
       <div className="container-fluid">
         <a className="navbar-brand me-auto" href="#">
-          <img src={logo} alt="Worksyde Logo" height={40} />
+          <h4 style={{ color: "#007674", fontWeight: 600 }}>GlobeTrotter</h4>
+          {/* <img src={logo} alt="Worksyde Logo" height={40} /> */}
         </a>
 
         <div
@@ -18,7 +19,8 @@ const Header = ({ activeTab = "home" }) => {
         >
           <div className="offcanvas-header">
             <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
-              <img src={logo} alt="Worksyde Logo" height={40} />
+              <h4 style={{ color: "#007674", fontWeight: 600 }}>GlobeTrotter</h4>
+              {/* <img src={logo} alt="Worksyde Logo" height={40} /> */}
             </h5>
             <button
               type="button"
@@ -38,7 +40,7 @@ const Header = ({ activeTab = "home" }) => {
                   Home
                 </Link>
               </li>
-              <li className="nav-item">
+              {/* <li className="nav-item">
                 <Link className={`nav-link mx-lg-2 ${activeTab === "find-work" ? "active" : ""}`} to={"/login"}>
                   Find Work
                 </Link>
@@ -52,7 +54,7 @@ const Header = ({ activeTab = "home" }) => {
                 <a className={`nav-link mx-lg-2 ${activeTab === "categories" ? "active" : ""}`} href="#">
                   Categories
                 </a>
-              </li>
+              </li> */}
               <li className="nav-item">
                 <Link className={`nav-link mx-lg-2 ${activeTab === "about" ? "active" : ""}`} to={"/about"}>
                   About

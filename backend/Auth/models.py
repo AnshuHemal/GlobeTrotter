@@ -28,6 +28,15 @@ class User(Document):
     role = StringField(required=True)
     onlineStatus = StringField(choices=["online", "offline"], default="offline")
     lastSeen = DateTimeField(default=timezone.now)
+    
+    # Profile photo as binary data stored in MongoDB
+    profilePhoto = BinaryField()
+    profilePhotoType = StringField()  # Store MIME type (e.g., "image/jpeg")
+    profilePhotoName = StringField()  # Store original filename
+    
+    # Location fields
+    country = StringField()
+    city = StringField()
 
     meta = {"collection": "users", "strict": False}
 

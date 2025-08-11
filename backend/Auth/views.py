@@ -15,6 +15,7 @@ from Auth.models import (
 from Auth.decorators import verify_token
 from Auth.decorators import verify_token
 from Admin.emails import send_otp_email
+from Auth.utils import validate_image_file
 from django.http import HttpResponse
 import jwt
 from datetime import datetime, timedelta
@@ -32,6 +33,7 @@ import uuid
 from rest_framework.permissions import IsAuthenticated
 import requests
 import base64
+import io
 
 def generate_token_and_set_cookie(response, user_id):
     payload = {
@@ -53,16 +55,22 @@ def generate_token_and_set_cookie(response, user_id):
     return token
 
 @api_view(["POST"])
+@parser_classes([MultiPartParser, FormParser])
 def signup(request):
     data = request.data
     fullname = data.get("fullname")
     email = data.get("email")
     password = data.get("password")
     role = data.get("role")
+    country = data.get("country")
+    city = data.get("city")
+    
+    # Handle profile photo upload
+    profile_photo = request.FILES.get("profilePhoto")
 
     if not all([fullname, email, password, role]):
         return Response(
-            {"success": False, "message": "All fields are required."},
+            {"success": False, "message": "All required fields are required."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -75,8 +83,32 @@ def signup(request):
     hashed_password = make_password(password)
 
     user = User(
-        name=fullname, email=email, password=hashed_password, role=role, isverified=True
+        name=fullname, 
+        email=email, 
+        password=hashed_password, 
+        role=role, 
+        isverified=True,
+        country=country,
+        city=city
     )
+    
+    # Handle profile photo if provided
+    if profile_photo:
+        try:
+            # Validate the uploaded file
+            validate_image_file(profile_photo)
+            
+            # Read the file content
+            photo_content = profile_photo.read()
+            user.profilePhoto = photo_content
+            user.profilePhotoType = profile_photo.content_type
+            user.profilePhotoName = profile_photo.name
+        except ValidationError as e:
+            return Response(
+                {"success": False, "message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    
     user.save()
 
     response = Response(
@@ -126,6 +158,9 @@ def login(request):
                 "lastLogin": user.lastLogin,
                 "onlineStatus": user.onlineStatus,
                 "lastSeen": user.lastSeen,
+                "country": user.country,
+                "city": user.city,
+                "hasProfilePhoto": bool(user.profilePhoto),
             },
         },
         status=status.HTTP_200_OK,
@@ -183,10 +218,100 @@ def current_user(request):
             "lastLogin": user.lastLogin,
             "onlineStatus": user.onlineStatus,
             "lastSeen": user.lastSeen,
+            "country": user.country,
+            "city": user.city,
+            "hasProfilePhoto": bool(user.profilePhoto),
         },
     }
     
     return Response(data, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@verify_token
+def get_profile_photo(request):
+    """Get user's profile photo"""
+    user = request.user
+    
+    if not user.profilePhoto:
+        return Response(
+            {"success": False, "message": "No profile photo found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Convert binary data to base64 for frontend
+    photo_base64 = base64.b64encode(user.profilePhoto).decode('utf-8')
+    
+    return Response({
+        "success": True,
+        "photo": photo_base64,
+        "contentType": user.profilePhotoType,
+        "filename": user.profilePhotoName
+    }, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+@verify_token
+@parser_classes([MultiPartParser, FormParser])
+def update_profile(request):
+    """Update user profile information"""
+    user = request.user
+    data = request.data
+    
+    # Update basic fields
+    if 'name' in data:
+        user.name = data['name']
+    if 'country' in data:
+        user.country = data['country']
+    if 'city' in data:
+        user.city = data['city']
+    
+    # Handle profile photo update
+    profile_photo = request.FILES.get("profilePhoto")
+    if profile_photo:
+        try:
+            # Validate the uploaded file
+            validate_image_file(profile_photo)
+            
+            # Read the file content
+            photo_content = profile_photo.read()
+            user.profilePhoto = photo_content
+            user.profilePhotoType = profile_photo.content_type
+            user.profilePhotoName = profile_photo.name
+        except ValidationError as e:
+            return Response(
+                {"success": False, "message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    
+    user.save()
+    
+    return Response({
+        "success": True,
+        "message": "Profile updated successfully",
+        "user": {
+            "id": str(user.id),
+            "name": user.name,
+            "email": user.email,
+            "country": user.country,
+            "city": user.city,
+            "hasProfilePhoto": bool(user.profilePhoto),
+        }
+    }, status=status.HTTP_200_OK)
+
+@api_view(["DELETE"])
+@verify_token
+def delete_profile_photo(request):
+    """Delete user's profile photo"""
+    user = request.user
+    
+    user.profilePhoto = None
+    user.profilePhotoType = None
+    user.profilePhotoName = None
+    user.save()
+    
+    return Response({
+        "success": True,
+        "message": "Profile photo deleted successfully"
+    }, status=status.HTTP_200_OK)
 
 @api_view(["POST"])
 def send_otp(request):
@@ -252,3 +377,5 @@ def verify_otp(request):
             },
             status=500,
         )
+
+        
