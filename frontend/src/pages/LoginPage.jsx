@@ -1,6 +1,6 @@
 import Header from "../components/Header";
 import React, { useState } from "react";
-import animation from "../assets/freelancer.mp4";
+import animation from "../assets/travel.mp4";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
