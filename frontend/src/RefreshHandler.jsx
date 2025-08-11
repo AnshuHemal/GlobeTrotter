@@ -20,7 +20,8 @@ export const RefreshHandler = ({ setIsAuthenticated }) => {
           setIsAuthenticated(true);
           if (
             location.pathname === "/login" ||
-            location.pathname === "/signup"
+            location.pathname === "/signup" ||
+            location.pathname === "/home"
           ) {
             navigate("/", { replace: true });
           }

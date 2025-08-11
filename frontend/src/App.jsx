@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -6,23 +6,38 @@ import DashboardPage from "./pages/DashboardPage";
 import { RefreshHandler } from "./RefreshHandler";
 import ProtectedRoute from "./ProtectedRoute";
 import { useUser } from "./contexts/UserContext";
+import axios from "axios";
 
 const App = () => {
-  const { userData, loading } = useUser();
-  const isAuthenticated = !!userData;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/auth/verify/",
+          {
+            withCredentials: true,
+          }
+        );
+
+        if (response.data.success) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuthentication();
+  }, []);
 
   return (
     <>
       <div>
-        <RefreshHandler />
+        <RefreshHandler setIsAuthenticated={setIsAuthenticated}/>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />

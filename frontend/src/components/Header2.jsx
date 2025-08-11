@@ -14,7 +14,7 @@ import UserStatusIndicator from "./UserStatusIndicator";
 import { useUser } from "../contexts/UserContext";
 
 const Header2 = () => {
-  const { userData, loading, fetchCurrentUser } = useUser();
+  const { userData, loading, fetchCurrentUser, clearUserData } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState(null);
@@ -52,7 +52,8 @@ const Header2 = () => {
   // Fetch profile photo when user data changes
   useEffect(() => {
     const fetchProfilePhoto = async () => {
-      if (userData?.hasProfilePhoto) {
+      // Only fetch if user is authenticated and has profile photo
+      if (userData?.hasProfilePhoto && userData?._id) {
         try {
           const response = await axios.get(`${API_URL}/profile/photo/`, {
             withCredentials: true
@@ -80,7 +81,7 @@ const Header2 = () => {
     };
 
     fetchProfilePhoto();
-  }, [userData?.hasProfilePhoto, API_URL]);
+  }, [userData?.hasProfilePhoto, userData?._id, API_URL]);
 
   // Cleanup blob URL when component unmounts
   useEffect(() => {
@@ -152,6 +153,7 @@ const Header2 = () => {
       );
 
       if (response?.data?.success) {
+        clearUserData();
         navigate("/");
         toast.success("Successfully Logged out..");
       }
@@ -256,131 +258,135 @@ const Header2 = () => {
           <TfiHelp className="icon-hover" size={20} />
           <BsBell className="icon-hover" size={20} />
 
-          {/* Profile Image with Online Status */}
-          {loading ? (
-            <div
-              className="rounded-circle d-flex align-items-center justify-content-center"
-              style={{
-                height: 32,
-                width: 32,
-                backgroundColor: "#f8f9fa",
-                cursor: "pointer",
-              }}
-              data-profile-icon
-              onClick={(e) => toggleDropdown(e)}
-            >
-              <div className="spinner-border spinner-border-sm" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          ) : (
-            <div
-              className="position-relative"
-              style={{ cursor: "pointer" }}
-              data-profile-icon
-              onClick={(e) => toggleDropdown(e)}
-            >
-              <img
-                src={getProfilePhotoUrl()}
-                alt="Profile"
-                className="rounded-circle"
-                height={32}
-                width={32}
-                style={{ objectFit: "cover" }}
-                onError={(e) => {
-                  e.target.src = logo; // Fallback to logo if image fails to load
-                }}
-              />
-              {/* Online Status Indicator */}
-              <BsCircleFill
-                className="position-absolute"
-                size={12}
-                style={{
-                  bottom: 0,
-                  right: 0,
-                  color:
-                    userData?.onlineStatus === "online"
-                      ? "#28a745"
-                      : "#6c757d",
-                  backgroundColor: "white",
-                  borderRadius: "50%",
-                  border: "2px solid white",
-                }}
-              />
-            </div>
-          )}
-          
-          {/* Dropdown Menu */}
-          {showDropdown && (
-            <div ref={dropdownRef} className="profile-dropdown shadow-sm">
-              <div className="profile-header d-flex align-items-center gap-3">
-                <img
-                  src={getProfilePhotoUrl()}
-                  className="rounded-circle"
-                  height={40}
-                  width={40}
-                  style={{ objectFit: "cover" }}
-                  onError={(e) => {
-                    e.target.src = logo;
+          {/* Profile Image with Online Status - Only show if user is authenticated */}
+          {userData && (
+            <>
+              {loading ? (
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center"
+                  style={{
+                    height: 32,
+                    width: 32,
+                    backgroundColor: "#f8f9fa",
+                    cursor: "pointer",
                   }}
-                />
-                <div>
-                  <div style={{ fontWeight: "600" }}>
-                    {loading ? "Loading..." : userData?.name || "User"}
+                  data-profile-icon
+                  onClick={(e) => toggleDropdown(e)}
+                >
+                  <div className="spinner-border spinner-border-sm" role="status">
+                    <span className="visually-hidden">Loading...</span>
                   </div>
-                  <div className="text-muted" style={{ fontSize: "14px" }}>
-                    {maskEmail(userData?.email)}
-                  </div>
-                  {/* Location Information */}
-                  {(userData?.country || userData?.city) && (
-                    <div className="text-muted" style={{ fontSize: "12px" }}>
-                      <BsGeoAlt className="me-1" />
-                      {userData?.city && userData?.country 
-                        ? `${userData.city}, ${userData.country}`
-                        : userData?.city || userData?.country || "Location not set"
-                      }
-                    </div>
-                  )}
                 </div>
-              </div>
-
-              <Link to={`/profile`} className="dropdown-item align-items-center" onClick={closeDropdown}>
-                <LuCircleUser
-                  style={{ width: "20px", height: "18px" }}
-                  className="me-2"
-                />{" "}
-                Your Profile
-              </Link>
+              ) : (
+                <div
+                  className="position-relative"
+                  style={{ cursor: "pointer" }}
+                  data-profile-icon
+                  onClick={(e) => toggleDropdown(e)}
+                >
+                  <img
+                    src={getProfilePhotoUrl()}
+                    alt="Profile"
+                    className="rounded-circle"
+                    height={32}
+                    width={32}
+                    style={{ objectFit: "cover" }}
+                    onError={(e) => {
+                      e.target.src = logo; // Fallback to logo if image fails to load
+                    }}
+                  />
+                  {/* Online Status Indicator */}
+                  <BsCircleFill
+                    className="position-absolute"
+                    size={12}
+                    style={{
+                      bottom: 0,
+                      right: 0,
+                      color:
+                        userData?.onlineStatus === "online"
+                          ? "#28a745"
+                          : "#6c757d",
+                      backgroundColor: "white",
+                      borderRadius: "50%",
+                      border: "2px solid white",
+                    }}
+                  />
+                </div>
+              )}
               
-              <div className="dropdown-item d-flex justify-content-between align-items-center">
-                <div>
-                  <MdOutlineLightMode
-                    style={{ width: "20px", height: "18px" }}
-                    className="me-2"
-                  />
-                  Theme: Light
-                </div>
-                <div className="form-check form-switch m-0">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    defaultChecked
-                  />
-                </div>
-              </div>
+              {/* Dropdown Menu */}
+              {showDropdown && (
+                <div ref={dropdownRef} className="profile-dropdown shadow-sm">
+                  <div className="profile-header d-flex align-items-center gap-3">
+                    <img
+                      src={getProfilePhotoUrl()}
+                      className="rounded-circle"
+                      height={40}
+                      width={40}
+                      style={{ objectFit: "cover" }}
+                      onError={(e) => {
+                        e.target.src = logo;
+                      }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: "600" }}>
+                        {loading ? "Loading..." : userData?.name || "User"}
+                      </div>
+                      <div className="text-muted" style={{ fontSize: "14px" }}>
+                        {maskEmail(userData?.email)}
+                      </div>
+                      {/* Location Information */}
+                      {(userData?.country || userData?.city) && (
+                        <div className="text-muted" style={{ fontSize: "12px" }}>
+                          <BsGeoAlt className="me-1" />
+                          {userData?.city && userData?.country 
+                            ? `${userData.city}, ${userData.country}`
+                            : userData?.city || userData?.country || "Location not set"
+                          }
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-              <div className="dropdown-divider my-2" />
-              <a className="dropdown-item text-danger" onClick={(e) => {
-                handleLogout(e);
-                closeDropdown();
-              }}>
-                <FiLogOut
-                  style={{ width: "20px", height: "18px" }}
-                  className="me-2 logout-icon"
-                />
-                Log out
-              </a>
-            </div>
+                  <Link to={`/profile`} className="dropdown-item align-items-center" onClick={closeDropdown}>
+                    <LuCircleUser
+                      style={{ width: "20px", height: "18px" }}
+                      className="me-2"
+                    />{" "}
+                    Your Profile
+                  </Link>
+                  
+                  <div className="dropdown-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <MdOutlineLightMode
+                        style={{ width: "20px", height: "18px" }}
+                        className="me-2"
+                      />
+                      Theme: Light
+                    </div>
+                    <div className="form-check form-switch m-0">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        defaultChecked
+                      />
+                    </div>
+                  </div>
+
+                  <div className="dropdown-divider my-2" />
+                  <a className="dropdown-item text-danger" onClick={(e) => {
+                    handleLogout(e);
+                    closeDropdown();
+                  }}>
+                    <FiLogOut
+                      style={{ width: "20px", height: "18px" }}
+                      className="me-2 logout-icon"
+                    />
+                    Log out
+                  </a>
+                </div>
+              )}
+            </>
           )}
         </div>
 
