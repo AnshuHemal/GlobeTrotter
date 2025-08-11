@@ -752,8 +752,13 @@ const SignupPage = () => {
           <div className="col-lg-6 col-12 d-flex flex-column justify-content-center overflow-x-hidden align-items-center text-center mb-4 mb-lg-0">
 
             <div className="w-100 px-3" style={{ maxWidth: "500px" }}>
-              <video src={animation} loop autoPlay></video>
-            </div>
+  <video 
+    src={animation} 
+    loop 
+    autoPlay 
+    style={{ width: "100%", height: "auto", objectFit: "contain" }} 
+  ></video>
+</div>
           </div>
         </div>
       </div>
