@@ -23,14 +23,13 @@ const ActivitySearch = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     category: '',
-    city: '',
+    location: '',
     minCost: '',
     maxCost: '',
     duration: '',
     sortBy: 'popularity'
   });
   const [categories, setCategories] = useState([]);
-  const [cities, setCities] = useState([]);
 
   const categoryIcons = {
     'Sightseeing': Camera,
@@ -59,15 +58,10 @@ const ActivitySearch = () => {
 
   const fetchFilters = async () => {
     try {
-      const [categoriesRes, citiesRes] = await Promise.all([
-        axios.get('/api/activities/categories'),
-        axios.get('/api/cities')
-      ]);
-      
-      setCategories(categoriesRes.data.categories || []);
-      setCities(citiesRes.data.cities || []);
+      const response = await axios.get('/api/activities/categories');
+      setCategories(response.data.categories || []);
     } catch (error) {
-      console.error('Error fetching filter options:', error);
+      console.error('Error fetching categories:', error);
     }
   };
 
@@ -77,7 +71,8 @@ const ActivitySearch = () => {
                            (activity.description || '').toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesCategory = !filters.category || activity.category === filters.category;
-      const matchesCity = !filters.city || activity.cityId === filters.city;
+      const matchesLocation = !filters.location || 
+        (activity.location && activity.location.toLowerCase().includes(filters.location.toLowerCase()));
       
       const cost = activity.cost || 0;
       const matchesMinCost = !filters.minCost || cost >= parseInt(filters.minCost);
@@ -85,7 +80,7 @@ const ActivitySearch = () => {
       
       const matchesDuration = !filters.duration || activity.duration === filters.duration;
       
-      return matchesSearch && matchesCategory && matchesCity && matchesMinCost && matchesMaxCost && matchesDuration;
+      return matchesSearch && matchesCategory && matchesLocation && matchesMinCost && matchesMaxCost && matchesDuration;
     });
 
     // Sort activities
@@ -116,10 +111,10 @@ const ActivitySearch = () => {
     }));
   };
 
-  const clearFilters = () => {
+  const handleResetFilters = () => {
     setFilters({
       category: '',
-      city: '',
+      location: '',
       minCost: '',
       maxCost: '',
       duration: '',
@@ -194,18 +189,16 @@ const ActivitySearch = () => {
                 ))}
               </select>
 
-              <select
-                value={filters.city}
-                onChange={(e) => handleFilterChange('city', e.target.value)}
-                className="filter-select"
-              >
-                <option value="">All Cities</option>
-                {cities.map((city) => (
-                  <option key={city.id} value={city.id}>
-                    {city.name}, {city.country}
-                  </option>
-                ))}
-              </select>
+              <div className="filter-group">
+                <label>Location</label>
+                <input
+                  type="text"
+                  placeholder="Filter by location"
+                  value={filters.location}
+                  onChange={(e) => handleFilterChange('location', e.target.value)}
+                  className="filter-input"
+                />
+              </div>
 
               <select
                 value={filters.duration}
@@ -251,7 +244,7 @@ const ActivitySearch = () => {
                 <option value="duration">Duration</option>
               </select>
 
-              <button onClick={clearFilters} className="clear-filters-btn">
+              <button onClick={handleResetFilters} className="clear-filters-btn">
                 Clear Filters
               </button>
             </div>
@@ -297,10 +290,12 @@ const ActivitySearch = () => {
                           {activity.category}
                         </div>
                         <h3>{activity.name}</h3>
-                        <div className="activity-location">
-                          <MapPin size={14} />
-                          {activity.city?.name}
-                        </div>
+                        {activity.location && (
+                          <div className="activity-location">
+                            <MapPin size={14} />
+                            <span>{activity.location}</span>
+                          </div>
+                        )}
                       </div>
 
                       <p className="activity-description">{activity.description}</p>
@@ -348,7 +343,7 @@ const ActivitySearch = () => {
               <Search size={64} />
               <h3>No activities found</h3>
               <p>Try adjusting your search criteria or filters</p>
-              <button onClick={clearFilters} className="btn btn-primary">
+              <button onClick={handleResetFilters} className="btn btn-primary">
                 Clear All Filters
               </button>
             </div>

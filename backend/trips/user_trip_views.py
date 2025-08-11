@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -11,20 +12,45 @@ from .package_models import TravelPackage
 @permission_classes([IsAuthenticated])
 def get_user_trips(request):
     """Get all trips for the authenticated user"""
+    print("Get user trips endpoint hit")  # Debug log
+    
     try:
         user = request.user
-        trips = UserTrip.objects(user=user).order_by('-created_at')
+        print(f"Fetching trips for user: {user.id}")  # Debug log
+        
+        # Get query parameters for filtering/sorting
+        status_filter = request.query_params.get('status')
+        sort_by = request.query_params.get('sort_by', '-created_at')
+        
+        # Build query
+        query = {'user': user.id}
+        if status_filter and status_filter.lower() != 'all':
+            query['status'] = status_filter.lower()
+        
+        print(f"Querying trips with: {query}")  # Debug log
+        
+        # Execute query
+        trips = UserTrip.objects(**query).order_by(sort_by)
+        trips_list = [trip.to_dict() for trip in trips]
+        
+        print(f"Found {len(trips_list)} trips")  # Debug log
         
         return Response({
             'success': True,
-            'trips': [trip.to_dict() for trip in trips]
+            'count': len(trips_list),
+            'trips': trips_list
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
+        print(f"Error in get_user_trips: {str(e)}")  # Debug log
+        import traceback
+        traceback.print_exc()  # Print full traceback to console
+        
         return Response({
             'success': False,
             'message': 'Failed to fetch user trips',
-            'error': str(e)
+            'error': str(e),
+            'details': 'An error occurred while retrieving your trips. Please try again later.'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -32,50 +58,122 @@ def get_user_trips(request):
 @permission_classes([IsAuthenticated])
 def book_trip_package(request):
     """Book a travel package for the authenticated user"""
+    print("Book trip package endpoint hit")  # Debug log
+    print(f"Request data: {request.data}")  # Debug log
+    
     try:
         user = request.user
+        print(f"Authenticated user: {user.id}")  # Debug log
+        
         package_id = request.data.get('package_id')
+        print(f"Package ID from request: {package_id}")  # Debug log
         
         if not package_id:
+            print("Error: Package ID is missing")  # Debug log
             return Response({
                 'success': False,
-                'message': 'Package ID is required'
+                'message': 'Package ID is required',
+                'error': 'MISSING_PACKAGE_ID'
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Get the travel package
         try:
+            print(f"Looking for package with ID: {package_id}")  # Debug log
             package = TravelPackage.objects.get(id=package_id)
-        except DoesNotExist:
+            print(f"Found package: {package.title}")  # Debug log
+        except (DoesNotExist, ValidationError) as e:
+            print(f"Package not found or invalid ID: {str(e)}")  # Debug log
             return Response({
                 'success': False,
-                'message': 'Travel package not found'
+                'message': 'Travel package not found',
+                'error': 'PACKAGE_NOT_FOUND',
+                'details': str(e)
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Create a user trip from the package
-        user_trip = UserTrip(
-            user=user,
-            title=package.title,
-            location=package.subtitle or package.title,
-            stay=package.duration,
-            price=package.current_price,
-            old_price=package.old_price,
-            save_amount=package.save_amount,
-            image_url=package.image_url,
-            status='upcoming'
-        )
-        user_trip.save()
+        try:
+            # Get trip details from request or use package defaults
+            title = request.data.get('title', package.title)
+            description = request.data.get('description', package.description or '')
+            destination = request.data.get('destination', package.subtitle or package.title)
+            start_date = request.data.get('start_date', datetime.utcnow())
+            end_date = request.data.get('end_date')
+            
+            # Ensure we have valid dates
+            if not end_date and package.duration:
+                # Try to parse duration string like '7 Days 6 Nights'
+                try:
+                    days = int(package.duration.split()[0])
+                    end_date = start_date + timedelta(days=days)
+                except (ValueError, IndexError, AttributeError):
+                    end_date = start_date + timedelta(days=7)  # Default to 7 days if can't parse
+            
+            total_budget = float(request.data.get('total_budget', package.current_price or 0))
+            
+            print(f"Creating trip with data: {{\n  title: {title},\n  destination: {destination},\n  start_date: {start_date},\n  end_date: {end_date},\n  price: {total_budget}\n}}")  # Debug log
+            
+            # Create a user trip from the package
+            user_trip = UserTrip(
+                user=user.id,  # Store user ID as reference
+                title=title,
+                location=destination,  # Using location as required by the model
+                stay=package.duration or 'Custom',
+                price=total_budget,
+                old_price=float(package.old_price) if package.old_price is not None else total_budget,
+                save_amount=float(package.save_amount) if package.save_amount is not None else 0,
+                image_url=package.image_url or '',
+                status='upcoming'
+            )
+            
+            print("Saving trip to database...")  # Debug log
+            user_trip.save()
+            print(f"Trip saved with ID: {user_trip.id}")  # Debug log
+            
+        except ValidationError as ve:
+            print(f"Validation error: {str(ve)}")  # Debug log
+            return Response({
+                'success': False,
+                'message': 'Invalid trip data',
+                'error': 'VALIDATION_ERROR',
+                'details': str(ve)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error creating trip: {str(e)}")  # Debug log
+            return Response({
+                'success': False,
+                'message': 'Failed to create trip',
+                'error': 'TRIP_CREATION_FAILED',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Convert trip to dict including all required fields for frontend
+        trip_data = user_trip.to_dict()
+        
+        # Ensure all required fields are present for frontend
+        trip_data.update({
+            'startDate': trip_data.get('startDate') or start_date.isoformat() if hasattr(start_date, 'isoformat') else str(start_date),
+            'endDate': trip_data.get('endDate') or (end_date.isoformat() if hasattr(end_date, 'isoformat') else str(end_date) if end_date else None),
+            'budget': trip_data.get('budget') or total_budget,
+            'coverImage': trip_data.get('coverImage') or package.image_url or ''
+        })
+        
+        print(f"Trip created successfully: {trip_data}")  # Debug log
         
         return Response({
             'success': True,
             'message': 'Trip booked successfully',
-            'trip': user_trip.to_dict()
+            'trip': trip_data
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
+        print(f"Unexpected error in book_trip_package: {str(e)}")  # Debug log
+        import traceback
+        traceback.print_exc()  # Print full traceback to console
+        
         return Response({
             'success': False,
-            'message': 'Failed to book trip',
-            'error': str(e)
+            'message': 'An unexpected error occurred while booking your trip',
+            'error': 'INTERNAL_SERVER_ERROR',
+            'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

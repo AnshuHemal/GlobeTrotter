@@ -23,4 +23,6 @@ urlpatterns = [
     path('api/trips', include('trips.urls')),  # Handle requests without trailing slash
     path('api/destinations/', include('destinations.urls')),
     path('api/dashboard/stats', get_dashboard_stats, name='dashboard_stats'),
+    # Package routes
+    path('api/', include('trips.package_urls')),
 ]

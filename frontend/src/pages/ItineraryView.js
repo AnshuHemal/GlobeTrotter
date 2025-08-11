@@ -7,8 +7,7 @@ import {
   Clock, 
   DollarSign, 
   Edit3, 
-  Share2, 
-  Download,
+  Share2,
   List,
   Grid
 } from 'lucide-react';
@@ -21,11 +20,7 @@ const ItineraryView = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('timeline'); // timeline or list
 
-  useEffect(() => {
-    fetchTripData();
-  }, [tripId]);
-
-  const fetchTripData = async () => {
+  const fetchTripData = React.useCallback(async () => {
     try {
       const [tripRes, stopsRes] = await Promise.all([
         axios.get(`/api/trips/${tripId}`),
@@ -39,7 +34,11 @@ const ItineraryView = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tripId]);
+
+  useEffect(() => {
+    fetchTripData();
+  }, [fetchTripData]);
 
   const calculateTotalBudget = () => {
     return stops.reduce((total, stop) => {
@@ -169,9 +168,8 @@ const ItineraryView = () => {
                     <div className="timeline-content">
                       <div className="stop-card">
                         <div className="stop-header">
-                          <div className="stop-city">
-                            <h3>{stop.city?.name}</h3>
-                            <span className="stop-country">{stop.city?.country}</span>
+                          <div className="stop-location">
+                            <h3>{stop.location}</h3>
                           </div>
                           <div className="stop-dates">
                             <Calendar size={16} />
@@ -218,7 +216,7 @@ const ItineraryView = () => {
                     <div className="list-header">
                       <div className="stop-number">{index + 1}</div>
                       <div className="stop-info">
-                        <h3>{stop.city?.name}, {stop.city?.country}</h3>
+                        <h3>{stop.location}</h3>
                         <div className="stop-dates">
                           <Calendar size={16} />
                           {new Date(stop.startDate).toLocaleDateString()} - {new Date(stop.endDate).toLocaleDateString()}

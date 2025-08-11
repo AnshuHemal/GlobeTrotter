@@ -10,14 +10,13 @@ import BookTrip from './pages/BookTrip';
 import MyTrips from './pages/MyTrips';
 import ItineraryBuilder from './pages/ItineraryBuilder';
 import ItineraryView from './pages/ItineraryView';
-import CitySearch from './pages/CitySearch';
 import ActivitySearch from './pages/ActivitySearch';
-import Cities from './pages/Cities';
 import TripBudget from './pages/TripBudget';
 import TripCalendar from './pages/TripCalendar';
 import SharedItinerary from './pages/SharedItinerary';
 import UserProfile from './pages/UserProfile';
 import AdminDashboard from './pages/AdminDashboard';
+import Cities from './pages/Cities';
 import './App.css';
 
 function App() {
@@ -42,9 +41,8 @@ function App() {
                     <Route path="/trip/:tripId/view" element={<ItineraryView />} />
                     <Route path="/trip/:tripId/budget" element={<TripBudget />} />
                     <Route path="/trip/:tripId/calendar" element={<TripCalendar />} />
-                    <Route path="/cities" element={<CitySearch />} />
-                    <Route path="/explore" element={<Cities />} />
                     <Route path="/activities" element={<ActivitySearch />} />
+                    <Route path="/cities" element={<Cities />} />
                     <Route path="/profile" element={<UserProfile />} />
                     <Route path="/admin" element={<AdminDashboard />} />
                   </Routes>

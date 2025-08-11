@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { tripsApi } from '../services/api';
 import { Calendar, MapPin, Star, Users, DollarSign, CheckCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import PaymentModal from '../components/PaymentModal';
 import './BookTrip.css';
 
 const BookTrip = () => {
+  const { user } = useAuth();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [bookingStatus, setBookingStatus] = useState({}); // Track booking status for each package
+  const [bookingStatus, setBookingStatus] = useState({});
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
   const [filters, setFilters] = useState({
     destination: '',
     duration: '',
@@ -17,14 +23,113 @@ const BookTrip = () => {
   });
   const navigate = useNavigate();
 
+  // Handle package selection and open payment modal
+  const handleBookNow = (pkg) => {
+    setSelectedPackage(pkg);
+    setShowPaymentModal(true);
+  };
+
+  // Handle successful payment and trip creation
+  const handlePaymentSuccess = async () => {
+    if (!selectedPackage) return;
+
+    try {
+      setBookingStatus(prev => ({ ...prev, [selectedPackage.id]: 'booking' }));
+      
+      // Prepare trip data
+      const tripData = {
+        package_id: selectedPackage.id,
+        title: selectedPackage.title,
+        description: selectedPackage.description,
+        start_date: new Date(), // You might want to make this dynamic
+        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 days
+        destination: selectedPackage.subtitle?.split('with ')[1] || selectedPackage.title,
+        total_budget: selectedPackage.current_price
+      };
+
+      let response;
+      try {
+        // Try new API service first
+        response = await tripsApi.bookPackage(tripData);
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        // Fallback to direct axios call
+        response = await axios.post('/api/trips/user/book', tripData, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+
+      if (response.data?.success || response.status === 200) {
+        setBookingStatus(prev => ({ ...prev, [selectedPackage.id]: 'success' }));
+        // Redirect to My Trips after a short delay
+        setTimeout(() => {
+          navigate('/my-trips');
+        }, 1500);
+      } else {
+        throw new Error(response.data?.message || 'Failed to book trip');
+      }
+    } catch (err) {
+      console.error('Error booking trip:', err);
+      setError('Failed to book the trip. Please try again.');
+      setBookingStatus(prev => ({ ...prev, [selectedPackage.id]: 'error' }));
+      
+      // Reset error status after 3 seconds
+      setTimeout(() => {
+        setBookingStatus(prev => ({ ...prev, [selectedPackage.id]: null }));
+        setError('');
+      }, 3000);
+    } finally {
+      setShowPaymentModal(false);
+      setSelectedPackage(null);
+    }
+  };
+
   useEffect(() => {
     const fetchPackages = async () => {
       try {
-        const response = await axios.get('/api/packages');
-        setPackages(response.data.packages || []);
+        let response;
+        try {
+          // Try new API service first
+          response = await tripsApi.getPackages();
+          console.log('Packages API response:', response);
+          // Handle both array response and nested data structure
+          const packagesData = Array.isArray(response.data) ? response.data : (response.data?.packages || []);
+          console.log('Processed packages data:', packagesData);
+          setPackages(packagesData);
+        } catch (apiError) {
+          console.warn('Primary API failed, falling back to direct URL', apiError);
+          // Fallback to direct axios call
+          const fallbackResponse = await axios.get('/api/packages', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          setPackages(Array.isArray(fallbackResponse.data) ? fallbackResponse.data : (fallbackResponse.data?.packages || []));
+        }
       } catch (err) {
         console.error('Error fetching packages:', err);
-        setError('Failed to load travel packages. Please try again later.');
+        setError(err.response?.data?.message || 'Failed to load packages. Please try again later.');
+        
+        // Set dummy data if API fails
+        setPackages([
+          {
+            id: '1',
+            title: 'Adventure Package',
+            subtitle: 'Explore the mountains with Adventure Package',
+            current_price: 999,
+            original_price: 1299,
+            rating: 4.8,
+            review_count: 124,
+            duration: '7 days',
+            destinations: ['Mountain Peak', 'Forest Trail'],
+            image_url: 'https://example.com/adventure.jpg',
+            category: 'adventure'
+          },
+          // Add more dummy packages as needed
+        ]);
       } finally {
         setLoading(false);
       }

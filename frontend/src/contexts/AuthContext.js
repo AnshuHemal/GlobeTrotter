@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { authApi } from '../services/authApi';
 
 const AuthContext = createContext();
 
@@ -31,11 +32,24 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await axios.get('/api/auth/me');
-      setUser(response.data.user);
-    } catch (error) {
-      localStorage.removeItem('token');
-      delete axios.defaults.headers.common['Authorization'];
+      // Try new API service first
+      const response = await authApi.getProfile();
+      setUser(response.data.user || response.data);
+    } catch (apiError) {
+      console.warn('Primary API failed, falling back to direct URL', apiError);
+      try {
+        // Fallback to direct axios call
+        const fallbackResponse = await axios.get('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        setUser(fallbackResponse.data.user || fallbackResponse.data);
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+      }
     } finally {
       setLoading(false);
     }
@@ -43,25 +57,43 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/api/auth/login', { email, password });
+      let response;
+      try {
+        // Try new API service first
+        response = await authApi.login(email, password);
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        // Fallback to direct axios call
+        response = await axios.post('/api/auth/login', { email, password });
+      }
+      
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
-      
       return { success: true };
     } catch (error) {
+      console.error('Login error:', error);
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Login failed' 
+        message: error.response?.data?.message || 'Login failed. Please try again.' 
       };
     }
   };
 
   const signup = async (name, email, password) => {
     try {
-      const response = await axios.post('/api/auth/signup', { name, email, password });
+      let response;
+      try {
+        // Try new API service first
+        response = await authApi.signup(name, email, password);
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        // Fallback to direct axios call
+        response = await axios.post('/api/auth/signup', { name, email, password });
+      }
+      
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);

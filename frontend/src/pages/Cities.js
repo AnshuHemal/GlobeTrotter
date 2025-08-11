@@ -1,84 +1,118 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, Star, DollarSign, Globe, Navigation } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Loader2 } from 'lucide-react';
 import './Cities.css';
 
 const Cities = () => {
-  const [places, setPlaces] = useState([]);
+  const [destinations, setDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
-    search: '',
-    type: 'all', // 'all', 'city', 'destination'
-    sort: 'popularity' // 'popularity', 'name', 'country'
+    country: '',
+    category: '',
+    sort: '-popularity_score',
   });
-  const navigate = useNavigate();
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 12,
+    total: 0,
+    totalPages: 1,
+  });
 
+  // Fetch destinations with current filters and pagination
+  const fetchDestinations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = new URLSearchParams({
+        page: pagination.page,
+        page_size: pagination.pageSize,
+        ...(filters.country && { country: filters.country }),
+        ...(filters.category && { category: filters.category }),
+        sort: filters.sort,
+      });
+
+      const response = await axios.get(`/api/destinations/?${params}`);
+      const { results, count, page, page_size, total_pages } = response.data;
+      
+      setDestinations(results);
+      setPagination(prev => ({
+        ...prev,
+        total: count,
+        totalPages: total_pages,
+        page: page,
+        pageSize: page_size,
+      }));
+    } catch (err) {
+      console.error('Error fetching destinations:', err);
+      setError('Failed to load destinations. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch destinations when component mounts or filters/pagination changes
   useEffect(() => {
-    const fetchPlaces = async () => {
-      try {
-        const response = await axios.get('/api/destinations/all-places');
-        if (response.data.success) {
-          setPlaces(response.data.places || []);
-        } else {
-          setError('Failed to load places. Please try again later.');
-        }
-      } catch (err) {
-        console.error('Error fetching places:', err);
-        setError('Failed to connect to the server. Please check your connection.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchDestinations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, pagination.page]);
 
-    fetchPlaces();
-  }, []);
-
-  const handleFilterChange = (filterType, value) => {
+  // Handle filter changes
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
     setFilters(prev => ({
       ...prev,
-      [filterType]: value
+      [name]: value
+    }));
+    // Reset to first page when filters change
+    setPagination(prev => ({
+      ...prev,
+      page: 1,
     }));
   };
 
-  const filteredPlaces = places.filter(place => {
-    const matchesSearch = place.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-                        place.country.toLowerCase().includes(filters.search.toLowerCase());
-    const matchesType = filters.type === 'all' || place.type === filters.type;
-    return matchesSearch && matchesType;
-  }).sort((a, b) => {
-    if (filters.sort === 'name') {
-      return a.name.localeCompare(b.name);
-    } else if (filters.sort === 'country') {
-      return a.country.localeCompare(b.country);
-    }
-    // Default sort by popularity
-    return b.popularity - a.popularity;
-  });
-
-  const handlePlaceClick = (place) => {
-    if (place.type === 'city') {
-      navigate(`/city/${place.id}`);
-    } else {
-      navigate(`/destination/${place.id}`);
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination(prev => ({
+        ...prev,
+        page: newPage,
+      }));
+      // Scroll to top when changing pages
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  if (loading) {
+  // Extract unique categories for filter dropdown
+  const categories = [
+    'beach', 'mountain', 'city', 'historical', 'adventure', 'cultural'
+  ];
+  
+  // Format category for display (capitalize first letter)
+  const formatCategory = (category) => {
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
+
+  if (loading && destinations.length === 0) {
     return (
-      <div className="cities-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading amazing places...</p>
+      <div className="loading-container">
+        <Loader2 className="animate-spin" size={48} />
+        <p>Loading destinations...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="cities-error">
+      <div className="error-container">
+        <h2>Oops! Something went wrong</h2>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()} className="retry-button">
+        <button 
+          onClick={fetchDestinations}
+          className="retry-button"
+        >
           Retry
         </button>
       </div>
@@ -86,116 +120,206 @@ const Cities = () => {
   }
 
   return (
-    <div className="cities">
-      <div className="cities-header">
-        <h1>Explore Amazing Places</h1>
-        <p>Discover cities and destinations around the world</p>
-      </div>
+    <div className="cities-container">
+      <header className="cities-header">
+        <div className="header-content">
+          <h1>Explore Amazing Destinations</h1>
+          <p>Discover your next adventure in these beautiful locations around the world</p>
+        </div>
+      </header>
 
-      <div className="filters-section">
+      <div className="filters-container">
         <div className="filter-group">
-          <div className="search-input-container">
-            <input
-              type="text"
-              placeholder="Search by name or country..."
-              className="search-input"
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-            />
-            <span className="search-icon">🔍</span>
-          </div>
-          
+          <label htmlFor="country">Country:</label>
+          <input
+            type="text"
+            id="country"
+            name="country"
+            placeholder="Filter by country..."
+            value={filters.country}
+            onChange={handleFilterChange}
+            className="filter-input"
+          />
+        </div>
+
+        <div className="filter-group">
+          <label htmlFor="category">Category:</label>
           <select
+            id="category"
+            name="category"
+            value={filters.category}
+            onChange={handleFilterChange}
             className="filter-select"
-            value={filters.type}
-            onChange={(e) => handleFilterChange('type', e.target.value)}
           >
-            <option value="all">All Places</option>
-            <option value="city">Cities</option>
-            <option value="destination">Destinations</option>
+            <option value="">All Categories</option>
+            {categories.map(category => (
+              <option key={category} value={category}>
+                {formatCategory(category)}
+              </option>
+            ))}
           </select>
-          
+        </div>
+
+        <div className="filter-group">
+          <label htmlFor="sort">Sort By:</label>
           <select
-            className="filter-select"
+            id="sort"
+            name="sort"
             value={filters.sort}
-            onChange={(e) => handleFilterChange('sort', e.target.value)}
+            onChange={handleFilterChange}
+            className="filter-select"
           >
-            <option value="popularity">Sort by: Popularity</option>
-            <option value="name">Sort by: Name (A-Z)</option>
-            <option value="country">Sort by: Country</option>
+            <option value="-popularity_score">Most Popular</option>
+            <option value="name">Name (A-Z)</option>
+            <option value="-name">Name (Z-A)</option>
+            <option value="average_cost_per_day">Price: Low to High</option>
+            <option value="-average_cost_per_day">Price: High to Low</option>
           </select>
         </div>
       </div>
 
-      {filteredPlaces.length === 0 ? (
-        <div className="no-results">
-          <p>No places found matching your criteria.</p>
-        </div>
-      ) : (
-        <div className="places-grid">
-          {filteredPlaces.map((place) => (
-            <div 
-              key={`${place.type}-${place.id}`} 
-              className="place-card"
-              onClick={() => handlePlaceClick(place)}
-            >
-              <div className="place-image-container">
+      <div className="destinations-grid">
+        {destinations.map((destination) => (
+          <div key={destination.id} className="destination-card">
+            <div className="card-image">
+              {destination.image_url ? (
                 <img 
-                  src={place.image_url || 'https://via.placeholder.com/300x200?text=No+Image'} 
-                  alt={place.name}
-                  className="place-image"
+                  src={destination.image_url} 
+                  alt={destination.name} 
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Available';
+                    e.target.src = 'https://via.placeholder.com/400x250?text=Image+Not+Available';
                   }}
                 />
-                <div className="place-type-badge">
-                  {place.type === 'city' ? (
-                    <><Globe size={14} /> City</>
-                  ) : (
-                    <><Navigation size={14} /> Destination</>
-                  )}
+              ) : (
+                <div className="image-placeholder">
+                  <MapPin size={32} />
+                  <span>No Image Available</span>
+                </div>
+              )}
+              {destination.category && (
+                <span className="category-badge">
+                  {destination.category}
+                </span>
+              )}
+            </div>
+            <div className="card-content">
+              <div className="card-header">
+                <h3>{destination.name}</h3>
+                <div className="location">
+                  <MapPin size={16} />
+                  <span>{destination.country}</span>
                 </div>
               </div>
               
-              <div className="place-details">
-                <div className="place-header">
-                  <h3 className="place-name">{place.name}</h3>
-                  <div className="place-rating">
-                    <Star size={16} fill="#F59E0B" color="#F59E0B" />
-                    <span>{place.popularity}%</span>
+              <p className="description">
+                {destination.description?.substring(0, 100)}
+                {destination.description?.length > 100 ? '...' : ''}
+              </p>
+              
+              <div className="card-details">
+                <div className="detail-item">
+                  <DollarSign size={16} />
+                  <span>${destination.average_cost_per_day || 'N/A'}/day</span>
+                </div>
+                {destination.best_time_to_visit && (
+                  <div className="detail-item">
+                    <Clock size={16} />
+                    <span>Best time: {destination.best_time_to_visit}</span>
                   </div>
-                </div>
-                
-                <div className="place-location">
-                  <MapPin size={16} />
-                  <span>{place.country}</span>
-                </div>
-                
-                <p className="place-description">
-                  {place.description || `Explore the beautiful ${place.type} of ${place.name}`}
-                </p>
-                
-                <div className="place-footer">
-                  {place.average_cost > 0 && (
-                    <div className="place-cost">
-                      <DollarSign size={16} />
-                      <span>${place.average_cost.toFixed(2)}/day</span>
-                    </div>
-                  )}
-                  <button 
-                    className="explore-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlaceClick(place);
-                    }}
-                  >
-                    Explore
-                  </button>
-                </div>
+                )}
               </div>
+              
+              <Link 
+                to={`/destinations/${destination.id}`} 
+                className="view-details-button"
+              >
+                View Details
+              </Link>
             </div>
-          ))}
+          </div>
+        ))}
+      </div>
+
+      {pagination.totalPages > 1 && (
+        <div className="pagination">
+          <button 
+            onClick={() => handlePageChange(pagination.page - 1)}
+            disabled={pagination.page === 1}
+            className="pagination-button"
+          >
+            Previous
+          </button>
+          
+          <div className="page-numbers">
+            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+              // Show pages around current page
+              let pageNum;
+              if (pagination.totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (pagination.page <= 3) {
+                pageNum = i + 1;
+              } else if (pagination.page >= pagination.totalPages - 2) {
+                pageNum = pagination.totalPages - 4 + i;
+              } else {
+                pageNum = pagination.page - 2 + i;
+              }
+              
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`pagination-number ${pagination.page === pageNum ? 'active' : ''}`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            
+            {pagination.totalPages > 5 && pagination.page < pagination.totalPages - 2 && (
+              <span className="ellipsis">...</span>
+            )}
+            
+            {pagination.totalPages > 5 && pagination.page < pagination.totalPages - 2 && (
+              <button
+                onClick={() => handlePageChange(pagination.totalPages)}
+                className={`pagination-number ${pagination.page === pagination.totalPages ? 'active' : ''}`}
+              >
+                {pagination.totalPages}
+              </button>
+            )}
+          </div>
+          
+          <button 
+            onClick={() => handlePageChange(pagination.page + 1)}
+            disabled={pagination.page === pagination.totalPages}
+            className="pagination-button"
+          >
+            Next
+          </button>
+        </div>
+      )}
+      
+      {destinations.length === 0 && !loading && (
+        <div className="no-results">
+          <h3>No destinations found</h3>
+          <p>Try adjusting your filters or search criteria</p>
+          <button 
+            onClick={() => {
+              setFilters({
+                country: '',
+                category: '',
+                sort: '-popularity_score',
+              });
+              setPagination(prev => ({
+                ...prev,
+                page: 1,
+              }));
+            }}
+            className="clear-filters-button"
+          >
+            Clear All Filters
+          </button>
         </div>
       )}
     </div>

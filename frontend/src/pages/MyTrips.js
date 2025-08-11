@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { tripsApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   MapPin, 
   Calendar, 
@@ -9,28 +11,74 @@ import {
   Eye, 
   Trash2, 
   PlusCircle,
-  Search
+  Search,
+  AlertCircle
 } from 'lucide-react';
 import './MyTrips.css';
 
 const MyTrips = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [filteredTrips, setFilteredTrips] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('created');
 
   useEffect(() => {
-    fetchTrips();
-  }, []);
+    if (user) {
+      fetchTrips();
+    } else {
+      setLoading(false);
+      setError('Please log in to view your trips');
+    }
+  }, [user]);
 
   const fetchTrips = async () => {
     try {
-      const response = await axios.get('/api/trips');
-      setTrips(response.data.trips || []);
+      setLoading(true);
+      setError('');
+      
+      let response;
+      try {
+        // Try new API service first
+        response = await tripsApi.getTrips({ user: true });
+        // Handle both array response and nested data structure
+        const tripsData = Array.isArray(response.data) ? response.data : (response.data?.trips || []);
+        setTrips(tripsData);
+        return; // Exit if successful
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        // Fallback to direct axios call
+        const fallbackResponse = await axios.get('/api/trips/user', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        const fallbackData = Array.isArray(fallbackResponse.data) ? 
+          fallbackResponse.data : 
+          (fallbackResponse.data?.trips || []);
+        setTrips(fallbackData);
+      }
     } catch (error) {
       console.error('Error fetching trips:', error);
+      setError(error.response?.data?.message || 'Failed to load your trips. Please try again.');
+      
+      // Set dummy data if API fails
+      setTrips([
+        {
+          id: '1',
+          title: 'Summer Vacation',
+          destination: 'Bali, Indonesia',
+          start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'upcoming',
+          total_budget: 2500,
+          image_url: 'https://example.com/bali.jpg'
+        }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -38,20 +86,21 @@ const MyTrips = () => {
 
   const filterAndSortTrips = useCallback(() => {
     let filtered = trips.filter(trip => {
-      const matchesSearch = (trip.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (trip.description || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = (trip.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (trip.destination || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (trip.description || '').toLowerCase().includes(searchTerm.toLowerCase());
       
       const now = new Date();
-      const startDate = new Date(trip.startDate);
-      const endDate = new Date(trip.endDate);
+      const startDate = trip.start_date ? new Date(trip.start_date) : null;
+      const endDate = trip.end_date ? new Date(trip.end_date) : null;
       
       let matchesFilter = true;
       if (filterStatus === 'upcoming') {
-        matchesFilter = startDate > now;
+        matchesFilter = startDate && startDate > now;
       } else if (filterStatus === 'ongoing') {
-        matchesFilter = startDate <= now && endDate >= now;
+        matchesFilter = startDate && endDate && startDate <= now && endDate >= now;
       } else if (filterStatus === 'completed') {
-        matchesFilter = endDate < now;
+        matchesFilter = endDate && endDate < now;
       }
       
       return matchesSearch && matchesFilter;
@@ -60,14 +109,14 @@ const MyTrips = () => {
     // Sort trips
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
+        case 'title':
+          return (a.title || '').localeCompare(b.title || '');
         case 'startDate':
-          return new Date(a.startDate) - new Date(b.startDate);
-        case 'budget':
-          return (b.budget || 0) - (a.budget || 0);
+          return (new Date(a.start_date || 0) - new Date(b.start_date || 0));
+        case 'price':
+          return (b.price || 0) - (a.price || 0);
         default: // created
-          return new Date(b.createdAt) - new Date(a.createdAt);
+          return (new Date(b.created_at || 0) - new Date(a.created_at || 0));
       }
     });
 
@@ -78,25 +127,62 @@ const MyTrips = () => {
     filterAndSortTrips();
   }, [filterAndSortTrips]);
 
-  const deleteTrip = async (tripId) => {
-    if (!window.confirm('Are you sure you want to delete this trip?')) return;
-    
+  const handleDeleteTrip = async (tripId) => {
+    if (!window.confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
+      return;
+    }
+
     try {
-      await axios.delete(`/api/trips/${tripId}`);
-      setTrips(trips.filter(trip => trip.id !== tripId));
+      try {
+        // Try new API service first
+        await tripsApi.deleteTrip(tripId);
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        // Fallback to direct axios call
+        await axios.delete(`/api/trips/${tripId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+      }
+      
+      // Refresh trips after successful deletion
+      await fetchTrips();
+      
+      // Show success message
+      setError('');
+      // You might want to add a success toast/notification here
     } catch (error) {
       console.error('Error deleting trip:', error);
+      setError(error.response?.data?.message || 'Failed to delete trip. Please try again.');
     }
   };
 
   const getTripStatus = (trip) => {
+    if (!trip.start_date || !trip.end_date) return 'upcoming';
+    
     const now = new Date();
-    const startDate = new Date(trip.startDate);
-    const endDate = new Date(trip.endDate);
+    const startDate = new Date(trip.start_date);
+    const endDate = new Date(trip.end_date);
     
     if (startDate > now) return 'upcoming';
     if (startDate <= now && endDate >= now) return 'ongoing';
     return 'completed';
+  };
+  
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'upcoming': return 'status-badge-upcoming';
+      case 'ongoing': return 'status-badge-ongoing';
+      case 'completed': return 'status-badge-completed';
+      default: return 'status-badge-upcoming';
+    }
+  };
+  
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not specified';
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   const getStatusColor = (status) => {
@@ -108,12 +194,24 @@ const MyTrips = () => {
     }
   };
 
-  if (loading) {
+  if (!user) {
     return (
-      <div className="loading">
-        <div className="spinner"></div>
+      <div className="auth-required">
+        <AlertCircle size={48} className="auth-icon" />
+        <h2>Authentication Required</h2>
+        <p>Please log in to view your trips.</p>
+        <button 
+          className="btn btn-primary"
+          onClick={() => navigate('/login')}
+        >
+          Go to Login
+        </button>
       </div>
     );
+  }
+
+  if (loading) {
+    return <div className="loading">Loading your trips...</div>;
   }
 
   return (
@@ -237,7 +335,7 @@ const MyTrips = () => {
                     </div>
                     
                     <button 
-                      onClick={() => deleteTrip(trip.id)}
+                      onClick={() => handleDeleteTrip(trip.id)}
                       className="btn-delete"
                       aria-label="Delete trip"
                     >

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { userApi } from '../services/api';
 import { 
   User, 
   Mail, 
@@ -40,13 +41,22 @@ const UserProfile = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/user/profile', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setUser(response.data.user);
-      setPhotoPreview(response.data.user.photo || '');
+      // Fallback to old API URL if needed
+      let response;
+      try {
+        response = await userApi.getProfile();
+        setUser(response.data.user || response.data);
+        setPhotoPreview((response.data.user?.photo || response.data?.photo) || '');
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        const fallbackResponse = await axios.get('http://localhost:5000/api/user/profile', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        setUser(fallbackResponse.data.user || fallbackResponse.data);
+        setPhotoPreview((fallbackResponse.data.user?.photo || fallbackResponse.data?.photo) || '');
+      }
     } catch (error) {
       console.error('Error fetching user profile:', error);
       if (error.response?.status === 401) {
@@ -60,14 +70,28 @@ const UserProfile = () => {
 
   const fetchSavedDestinations = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/user/saved-destinations', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setSavedDestinations(response.data.destinations || []);
+      let response;
+      try {
+        // Try new API service first
+        response = await userApi.getSavedDestinations();
+        setSavedDestinations(response.data.destinations || response.data || []);
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        // Fallback to old API URL
+        const fallbackResponse = await axios.get('http://localhost:5000/api/user/saved-destinations', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        setSavedDestinations(fallbackResponse.data.destinations || fallbackResponse.data || []);
+      }
     } catch (error) {
       console.error('Error fetching saved destinations:', error);
+      setError('Failed to load saved destinations');
+      // Set empty array as fallback
+      setSavedDestinations([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,56 +118,103 @@ const UserProfile = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    try {
-      setSaving(true);
-      setError('');
-      
-      const response = await axios.put('http://localhost:5000/api/user/profile', user, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    setSuccess('');
 
-      if (response.data.success) {
-        setSuccess('Profile updated successfully!');
-        setTimeout(() => setSuccess(''), 3000);
+    try {
+      let response;
+      try {
+        // Try new API service first
+        response = await userApi.updateProfile(user);
+        setUser(response.data.user || response.data);
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        // Fallback to old API URL
+        response = await axios.put('http://localhost:5000/api/user/profile', user, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        setUser(response.data.user || response.data);
       }
+      
+      setSuccess('Profile updated successfully!');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError('Failed to update profile');
+      setError(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
   };
 
   const handleRemoveDestination = async (destinationId) => {
+    if (!window.confirm('Are you sure you want to remove this destination from your saved list?')) {
+      return;
+    }
+
     try {
-      await axios.delete(`http://localhost:5000/api/user/saved-destinations/${destinationId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      try {
+        // Try new API service first
+        await userApi.removeSavedDestination(destinationId);
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        // Fallback to old API URL
+        await axios.delete(`http://localhost:5000/api/user/saved-destinations/${destinationId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+      }
+      
+      // Update the UI by filtering out the removed destination
       setSavedDestinations(prev => prev.filter(dest => dest.id !== destinationId));
+      setSuccess('Destination removed successfully!');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error removing destination:', error);
-      setError('Failed to remove destination');
+      setError(error.response?.data?.message || 'Failed to remove destination');
     }
   };
 
   const handleDeleteAccount = async () => {
+    if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      return;
+    }
+
     try {
-      await axios.delete('http://localhost:5000/api/user/account', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      try {
+        // Try new API service first if available
+        if (userApi.deleteAccount) {
+          await userApi.deleteAccount();
+        } else {
+          // Fallback to direct URL
+          await axios.delete('http://localhost:5000/api/user/account', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
         }
-      });
+      } catch (apiError) {
+        console.warn('Primary API failed, falling back to direct URL', apiError);
+        // Fallback to old API URL
+        await axios.delete('http://localhost:5000/api/user/account', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+      }
+      
+      // Clear local storage and redirect to login
       localStorage.removeItem('token');
-      navigate('/');
+      navigate('/login');
     } catch (error) {
       console.error('Error deleting account:', error);
-      setError('Failed to delete account');
+      setError(error.response?.data?.message || 'Failed to delete account');
     }
   };
 

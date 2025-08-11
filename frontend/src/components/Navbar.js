@@ -6,13 +6,11 @@ import {
   Home, 
   PlusCircle, 
   MapPin, 
-  Calendar, 
-  DollarSign, 
-  Search, 
-  User, 
-  LogOut,
+  Calendar,
   Menu,
-  X
+  X,
+  User,
+  LogOut
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -31,7 +29,6 @@ const Navbar = () => {
     { path: '/dashboard', label: 'Dashboard', icon: Home },
     { path: '/my-trips', label: 'My Trips', icon: MapPin },
     { path: '/book-trip', label: 'Book Trip', icon: PlusCircle },
-    { path: '/explore', label: 'Explore', icon: Globe },
     { path: '/activities', label: 'Activities', icon: Calendar },
   ];
 

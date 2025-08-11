@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { tripsApi, destinationsApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   PlusCircle, 
@@ -21,26 +22,76 @@ const Dashboard = () => {
     totalTrips: 0,
     upcomingTrips: 0,
     totalBudget: 0,
-    visitedCities: 0
+    visitedDestinations: 0
   });
   const [popularDestinations, setPopularDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Memoize the initial stats to prevent unnecessary re-renders
+  const initialStats = React.useMemo(() => ({
+    totalTrips: 0,
+    upcomingTrips: 0,
+    totalBudget: 0,
+    visitedDestinations: 0
+  }), []);
 
   useEffect(() => {
     fetchDashboardData();
+    // fetchDashboardData is only used within this effect and doesn't depend on any props or state
+    // that would require it to be in the dependency array
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchDashboardData = async () => {
     try {
-      const [tripsRes, statsRes, destinationsRes] = await Promise.all([
-        axios.get('/api/trips/recent'),
-        axios.get('/api/dashboard/stats'),
-        axios.get('/api/destinations/popular')
-      ]);
+      // Helper function to fetch with fallback
+      const fetchWithFallback = async (primaryFn, fallbackUrl) => {
+        try {
+          const response = await primaryFn();
+          console.log('API Response from primary:', response);
+          return response.data;
+        } catch (apiError) {
+          console.warn('Primary API failed, falling back to direct URL', apiError);
+          const response = await axios.get(fallbackUrl, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          console.log('Fallback API Response:', response.data);
+          return response.data;
+        }
+      };
 
-      setTrips(tripsRes.data.trips || []);
-      setStats(statsRes.data.stats || stats);
-      setPopularDestinations(destinationsRes.data.destinations || []);
+      // Fetch all data in parallel with fallback support
+      const [tripsData, statsData, destinationsData] = await Promise.all([
+        fetchWithFallback(tripsApi.getRecentTrips, '/api/trips/recent'),
+        fetchWithFallback(() => tripsApi.getTrips({ stats: true }), '/api/dashboard/stats'),
+        fetchWithFallback(destinationsApi.getPopular, '/api/destinations/popular')
+      ]);
+      
+      console.log('Raw destinations data:', destinationsData);
+      
+      // Process trips data
+      const tripsRes = Array.isArray(tripsData) ? { data: tripsData } : (tripsData.trips ? { data: tripsData.trips } : { data: [] });
+      
+      // Process stats data
+      const statsRes = statsData.stats || statsData || initialStats;
+      
+      // Process destinations data - handle both direct array and nested destinations array
+      let processedDestinations = [];
+      if (Array.isArray(destinationsData)) {
+        processedDestinations = destinationsData;
+      } else if (destinationsData && destinationsData.destinations) {
+        processedDestinations = destinationsData.destinations;
+      } else if (destinationsData && destinationsData.data && Array.isArray(destinationsData.data)) {
+        processedDestinations = destinationsData.data;
+      }
+      
+      console.log('Processed destinations:', processedDestinations);
+      
+      setTrips(tripsRes.data || []);
+      setStats(statsRes);
+      setPopularDestinations(processedDestinations || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -90,15 +141,7 @@ const Dashboard = () => {
               <p>Upcoming Trips</p>
             </div>
           </div>
-          <div className="stat-card">
-            <div className="stat-icon">
-              <Globe className="icon-info" />
-            </div>
-            <div className="stat-content">
-              <h3>{stats.visitedCities}</h3>
-              <p>Cities Visited</p>
-            </div>
-          </div>
+
         </div>
 
         <div className="dashboard-content">

@@ -16,7 +16,7 @@ django.setup()
 
 from authentication.models import User
 from trips.models import Trip, Activity, BudgetItem
-from destinations.models import Destination, City
+from destinations.models import Destination
 
 
 def create_sample_users():
@@ -66,16 +66,15 @@ def create_sample_destinations():
     
     # Clear existing destinations
     Destination.objects.delete()
-    City.objects.delete()
     
     destinations_data = [
         {
             'name': 'Paris',
             'country': 'France',
-            'description': 'The City of Light, known for its art, fashion, gastronomy, and culture.',
+            'description': 'Known for its art, fashion, gastronomy, and culture.',
             'latitude': 48.8566,
             'longitude': 2.3522,
-            'category': 'city',
+            'category': 'cultural',
             'best_time_to_visit': 'April to June, September to October',
             'average_cost_per_day': 150.0,
             'popular_activities': ['Visit Eiffel Tower', 'Louvre Museum', 'Seine River Cruise', 'Montmartre Walk'],
@@ -87,7 +86,7 @@ def create_sample_destinations():
             'description': 'A bustling metropolis blending traditional and modern culture.',
             'latitude': 35.6762,
             'longitude': 139.6503,
-            'category': 'city',
+            'category': 'cultural',
             'best_time_to_visit': 'March to May, September to November',
             'average_cost_per_day': 120.0,
             'popular_activities': ['Visit Senso-ji Temple', 'Shibuya Crossing', 'Tsukiji Fish Market', 'Cherry Blossom Viewing'],
@@ -131,42 +130,6 @@ def create_sample_destinations():
         }
     ]
     
-    cities_data = [
-        {
-            'name': 'Paris',
-            'country': 'France',
-            'latitude': 48.8566,
-            'longitude': 2.3522,
-            'population': 2161000,
-            'timezone': 'CET',
-            'currency': 'EUR',
-            'attractions': ['Eiffel Tower', 'Louvre Museum', 'Notre-Dame Cathedral', 'Arc de Triomphe'],
-            'average_temperature': 12.0
-        },
-        {
-            'name': 'Tokyo',
-            'country': 'Japan',
-            'latitude': 35.6762,
-            'longitude': 139.6503,
-            'population': 13960000,
-            'timezone': 'JST',
-            'currency': 'JPY',
-            'attractions': ['Tokyo Tower', 'Senso-ji Temple', 'Imperial Palace', 'Shibuya Crossing'],
-            'average_temperature': 16.0
-        },
-        {
-            'name': 'London',
-            'country': 'United Kingdom',
-            'latitude': 51.5074,
-            'longitude': -0.1278,
-            'population': 8982000,
-            'timezone': 'GMT',
-            'currency': 'GBP',
-            'attractions': ['Big Ben', 'Tower Bridge', 'British Museum', 'London Eye'],
-            'average_temperature': 11.0
-        }
-    ]
-    
     # Create destinations
     created_destinations = []
     for dest_data in destinations_data:
@@ -175,13 +138,8 @@ def create_sample_destinations():
         created_destinations.append(destination)
         print(f"Created destination: {destination.name}, {destination.country}")
     
-    # Create cities
-    created_cities = []
-    for city_data in cities_data:
-        city = City(**city_data)
-        city.save()
-        created_cities.append(city)
-        print(f"Created city: {city.name}, {city.country}")
+    print("Skipping city creation as the City model has been removed")
+    return created_destinations, []
     
     return created_destinations, created_cities
 
@@ -202,7 +160,7 @@ def create_sample_trips(users):
     trips_data = [
         {
             'title': 'Paris Adventure',
-            'description': 'A romantic getaway to the City of Light',
+            'description': 'A romantic getaway to Paris',
             'destination': 'Paris, France',
             'start_date': datetime.now() + timedelta(days=30),
             'end_date': datetime.now() + timedelta(days=37),

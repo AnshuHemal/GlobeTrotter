@@ -32,10 +32,10 @@ class Command(BaseCommand):
             {
                 'name': 'Paris',
                 'country': 'France',
-                'description': 'City of love with iconic landmarks, world-class museums, and exquisite cuisine.',
+                'description': 'Iconic landmarks, world-class museums, and exquisite cuisine in the heart of France.',
                 'latitude': 48.8566,
                 'longitude': 2.3522,
-                'category': 'city',
+                'category': 'cultural',
                 'best_time_to_visit': 'April to June, September to November',
                 'average_cost_per_day': 150.0,
                 'popular_activities': ['Eiffel Tower', 'Louvre Museum', 'Notre-Dame Cathedral'],
@@ -46,7 +46,7 @@ class Command(BaseCommand):
             {
                 'name': 'Kyoto',
                 'country': 'Japan',
-                'description': 'Historic city with traditional temples, gardens, and geisha districts.',
+                'description': 'Traditional temples, gardens, and cultural heritage in Japan.',
                 'latitude': 35.0116,
                 'longitude': 135.7681,
                 'category': 'cultural',

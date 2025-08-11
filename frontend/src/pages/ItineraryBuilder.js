@@ -7,11 +7,7 @@ import {
   Calendar, 
   Clock, 
   DollarSign, 
-  Save, 
-  Eye, 
-  Trash2,
-  GripVertical,
-  Search
+  Trash2
 } from 'lucide-react';
 import './ItineraryBuilder.css';
 
@@ -23,21 +19,15 @@ const ItineraryBuilder = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAddStop, setShowAddStop] = useState(false);
-  const [cities, setCities] = useState([]);
   const [activities, setActivities] = useState([]);
   const [newStop, setNewStop] = useState({
-    cityId: '',
+    location: '',
     startDate: '',
     endDate: '',
     activities: []
   });
 
-  useEffect(() => {
-    fetchTripData();
-    fetchCities();
-  }, [tripId]);
-
-  const fetchTripData = async () => {
+  const fetchTripData = React.useCallback(async () => {
     try {
       const [tripRes, stopsRes] = await Promise.all([
         axios.get(`/api/trips/${tripId}`),
@@ -51,20 +41,17 @@ const ItineraryBuilder = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tripId]);
 
-  const fetchCities = async () => {
-    try {
-      const response = await axios.get('/api/cities');
-      setCities(response.data.cities || []);
-    } catch (error) {
-      console.error('Error fetching cities:', error);
-    }
-  };
+  useEffect(() => {
+    fetchTripData();
+  }, [fetchTripData]);
 
-  const fetchActivities = async (cityId) => {
+
+
+  const fetchActivities = async (location) => {
     try {
-      const response = await axios.get(`/api/cities/${cityId}/activities`);
+      const response = await axios.get(`/api/activities?location=${encodeURIComponent(location)}`);
       setActivities(response.data.activities || []);
     } catch (error) {
       console.error('Error fetching activities:', error);
@@ -72,13 +59,18 @@ const ItineraryBuilder = () => {
   };
 
   const handleAddStop = async () => {
-    if (!newStop.cityId || !newStop.startDate || !newStop.endDate) return;
-
+    if (!newStop.location || !newStop.startDate || !newStop.endDate) return;
+    
     try {
-      setSaving(true);
-      const response = await axios.post(`/api/trips/${tripId}/stops`, newStop);
+      const response = await axios.post(`/api/trips/${tripId}/stops`, {
+        location: newStop.location,
+        start_date: newStop.startDate,
+        end_date: newStop.endDate,
+        activities: newStop.activities
+      });
+      
       setStops([...stops, response.data.stop]);
-      setNewStop({ cityId: '', startDate: '', endDate: '', activities: [] });
+      setNewStop({ location: '', startDate: '', endDate: '', activities: [] });
       setShowAddStop(false);
     } catch (error) {
       console.error('Error adding stop:', error);
@@ -182,10 +174,10 @@ const ItineraryBuilder = () => {
                   <div className="stop-header">
                     <div className="stop-number">{index + 1}</div>
                     <div className="stop-info">
-                      <h3>{stop.city?.name}</h3>
+                      <h3>{stop.location}</h3>
                       <div className="stop-dates">
                         <Calendar size={16} />
-                        {new Date(stop.startDate).toLocaleDateString()} - {new Date(stop.endDate).toLocaleDateString()}
+                        {new Date(stop.start_date).toLocaleDateString()} - {new Date(stop.end_date).toLocaleDateString()}
                       </div>
                     </div>
                     <div className="stop-budget">
@@ -204,7 +196,7 @@ const ItineraryBuilder = () => {
                     <div className="activities-header">
                       <h4>Activities</h4>
                       <button
-                        onClick={() => fetchActivities(stop.cityId)}
+                        onClick={() => fetchActivities(stop.location)}
                         className="btn btn-secondary btn-sm"
                       >
                         <Plus size={16} />
@@ -278,8 +270,8 @@ const ItineraryBuilder = () => {
                 <div className="stat">
                   <span className="stat-label">Duration</span>
                   <span className="stat-value">
-                    {trip?.startDate && trip?.endDate 
-                      ? Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / (1000 * 60 * 60 * 24))
+                    {trip?.start_date && trip?.end_date 
+                      ? Math.ceil((new Date(trip.end_date) - new Date(trip.start_date)) / (1000 * 60 * 60 * 24))
                       : 0
                     } days
                   </span>
@@ -304,19 +296,15 @@ const ItineraryBuilder = () => {
               </div>
               <div className="modal-content">
                 <div className="form-group">
-                  <label className="form-label">City</label>
-                  <select
-                    value={newStop.cityId}
-                    onChange={(e) => setNewStop({ ...newStop, cityId: e.target.value })}
+                  <label className="form-label">Location</label>
+                  <input
+                    type="text"
                     className="form-input"
-                  >
-                    <option value="">Select a city</option>
-                    {cities.map((city) => (
-                      <option key={city.id} value={city.id}>
-                        {city.name}, {city.country}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Enter destination name"
+                    value={newStop.location}
+                    onChange={(e) => setNewStop({ ...newStop, location: e.target.value })}
+                    required
+                  />
                 </div>
                 <div className="form-row">
                   <div className="form-group">
