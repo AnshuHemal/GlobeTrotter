@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Calendar, MapPin, Star, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import BookingModal from '../components/BookingModal.jsx';
 import './TripDetail.css';
 
 const TripDetail = () => {
@@ -10,6 +11,7 @@ const TripDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [trip, setTrip] = useState(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -38,8 +40,33 @@ const TripDetail = () => {
       navigate('/login', { state: { from: `/trip/${id}` } });
       return;
     }
-    // TODO: integrate booking flow
-    console.log('Booking trip:', trip?.id);
+    setShowBookingModal(true);
+  };
+
+  const handleConfirmBooking = async ({ start_date, end_date }) => {
+    if (!trip) return;
+    try {
+      const payload = {
+        trip_id: trip.id || id,
+        package_id: trip.id || id,
+        title: trip.title,
+        image_url: trip.image_url || trip.image,
+        start_date,
+        end_date,
+      };
+      const response = await axios.post('/api/trips/user/book', payload, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (response.data?.success) {
+        setShowBookingModal(false);
+        navigate('/my-trips');
+      } else {
+        throw new Error(response.data?.message || 'Failed to book trip');
+      }
+    } catch (e) {
+      console.error('Booking failed:', e);
+      alert('Failed to book the trip. Please try again.');
+    }
   };
 
   if (loading) {
@@ -138,6 +165,12 @@ const TripDetail = () => {
           </div>
         )}
       {/* </div> */}
+      <BookingModal
+        open={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        onConfirm={handleConfirmBooking}
+        trip={trip}
+      />
     </div>
   );
 };

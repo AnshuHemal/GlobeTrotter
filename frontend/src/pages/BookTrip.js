@@ -4,7 +4,7 @@ import axios from 'axios';
 import { tripsApi } from '../services/api';
 import { Calendar, MapPin, Star, Users, DollarSign, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import PaymentModal from '../components/PaymentModal';
+import BookingModal from '../components/BookingModal.jsx';
 import './BookTrip.css';
 
 const BookTrip = () => {
@@ -13,7 +13,7 @@ const BookTrip = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bookingStatus, setBookingStatus] = useState({});
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [filters, setFilters] = useState({
     destination: '',
@@ -23,51 +23,36 @@ const BookTrip = () => {
   });
   const navigate = useNavigate();
 
-  // Handle package selection and open payment modal
+  // Open booking modal to pick dates
   const handleBookNow = (pkg) => {
     setSelectedPackage(pkg);
-    setShowPaymentModal(true);
+    setShowBookingModal(true);
   };
 
-  // Handle successful payment and trip creation
-  const handlePaymentSuccess = async () => {
+  // Confirm booking: receives ISO start_date and end_date from modal
+  const handleConfirmBooking = async ({ start_date, end_date }) => {
     if (!selectedPackage) return;
-
     try {
       setBookingStatus(prev => ({ ...prev, [selectedPackage.id]: 'booking' }));
-      
-      // Prepare trip data
-      const tripData = {
-        package_id: selectedPackage.id,
+
+      const payload = {
+        trip_id: selectedPackage.id,
+        package_id: selectedPackage.id, // for compatibility with existing backend
         title: selectedPackage.title,
-        description: selectedPackage.description,
-        start_date: new Date(), // You might want to make this dynamic
-        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 days
-        destination: selectedPackage.subtitle?.split('with ')[1] || selectedPackage.title,
-        total_budget: selectedPackage.current_price
+        image_url: selectedPackage.image_url || selectedPackage.image,
+        start_date,
+        end_date,
       };
 
-      let response;
-      try {
-        // Try new API service first
-        response = await tripsApi.bookPackage(tripData);
-      } catch (apiError) {
-        console.warn('Primary API failed, falling back to direct URL', apiError);
-        // Fallback to direct axios call
-        response = await axios.post('/api/trips/user/book', tripData, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      }
+      const response = await axios.post('/api/trips/user/book', payload, {
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-      if (response.data?.success || response.status === 200) {
+      if (response.data?.success) {
         setBookingStatus(prev => ({ ...prev, [selectedPackage.id]: 'success' }));
-        // Redirect to My Trips after a short delay
-        setTimeout(() => {
-          navigate('/my-trips');
-        }, 1500);
+        setShowBookingModal(false);
+        setSelectedPackage(null);
+        setTimeout(() => navigate('/my-trips'), 900);
       } else {
         throw new Error(response.data?.message || 'Failed to book trip');
       }
@@ -75,15 +60,10 @@ const BookTrip = () => {
       console.error('Error booking trip:', err);
       setError('Failed to book the trip. Please try again.');
       setBookingStatus(prev => ({ ...prev, [selectedPackage.id]: 'error' }));
-      
-      // Reset error status after 3 seconds
       setTimeout(() => {
         setBookingStatus(prev => ({ ...prev, [selectedPackage.id]: null }));
         setError('');
-      }, 3000);
-    } finally {
-      setShowPaymentModal(false);
-      setSelectedPackage(null);
+      }, 2500);
     }
   };
 
@@ -160,46 +140,10 @@ const BookTrip = () => {
     }));
   };
 
-  const handleBookPackage = async (packageId) => {
-    // Find the package being booked
-    const packageToBook = packages.find(pkg => pkg.id === packageId);
-    
-    if (!packageToBook) {
-      setError('Package not found');
-      return;
-    }
-    
-    // Update booking status to show loading
-    setBookingStatus(prev => ({ ...prev, [packageId]: 'booking' }));
-    
-    try {
-      // Send booking request to backend
-      const response = await axios.post('/api/trips/user/book', {
-        package_id: packageId
-      });
-      
-      if (response.data.success) {
-        // Update booking status to show success
-        setBookingStatus(prev => ({ ...prev, [packageId]: 'success' }));
-        
-        // Reset status after 3 seconds
-        setTimeout(() => {
-          setBookingStatus(prev => ({ ...prev, [packageId]: null }));
-        }, 3000);
-      } else {
-        throw new Error(response.data.message || 'Failed to book trip');
-      }
-    } catch (err) {
-      console.error('Error booking package:', err);
-      setError('Failed to book the package. Please try again.');
-      setBookingStatus(prev => ({ ...prev, [packageId]: 'error' }));
-      
-      // Reset error status after 3 seconds
-      setTimeout(() => {
-        setBookingStatus(prev => ({ ...prev, [packageId]: null }));
-        setError('');
-      }, 3000);
-    }
+  const handleBookPackage = (packageId) => {
+    const pkg = packages.find(p => p.id === packageId);
+    if (!pkg) { setError('Package not found'); return; }
+    handleBookNow(pkg);
   };
 
   const filteredPackages = packages.filter(pkg => {
@@ -334,6 +278,12 @@ const BookTrip = () => {
           </div>
         )}
       </div>
+      <BookingModal
+        open={showBookingModal}
+        onClose={() => { setShowBookingModal(false); setSelectedPackage(null); }}
+        onConfirm={handleConfirmBooking}
+        trip={selectedPackage}
+      />
     </div>
   );
 };

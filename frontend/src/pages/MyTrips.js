@@ -36,49 +36,105 @@ const MyTrips = () => {
     }
   }, [user]);
 
+  // Helper function to extract trips from different response formats
+  const extractTripsData = (data) => {
+    if (Array.isArray(data)) return data;
+    if (!data) return [];
+    return data.trips || data.user_trips || data.userTrips || data.data || data.results || [];
+  };
+
+  // Helper function to normalize trip data structure
+  const normalizeTrips = (trips) => {
+    if (!Array.isArray(trips)) return [];
+    
+    return trips.map(trip => ({
+      id: trip.id || trip._id || trip.trip_id || '',
+      title: trip.title || trip.name || trip.package_name || 'Untitled Trip',
+      image_url: trip.image_url || trip.image || trip.imageUrl || trip.thumbnail || '',
+      start_date: trip.start_date || trip.startDate || trip.trip_start || '',
+      end_date: trip.end_date || trip.endDate || trip.trip_end || '',
+      status: trip.status || 'upcoming',
+      // Include all original fields for debugging
+      ...trip,
+    }));
+  };
+
   const fetchTrips = async () => {
+    console.log('Starting to fetch trips...');
     try {
       setLoading(true);
       setError('');
+
+      const token = localStorage.getItem('token');
+      console.log('Using token from localStorage:', token ? 'yes' : 'no');
       
-      let response;
+      const authConfig = {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
+      };
+
+      // Try the safe endpoint first (always returns 200)
       try {
-        // Try new API service first
-        response = await tripsApi.getTrips({ user: true });
-        // Handle both array response and nested data structure
-        const tripsData = Array.isArray(response.data) ? response.data : (response.data?.trips || []);
-        setTrips(tripsData);
-        return; // Exit if successful
-      } catch (apiError) {
-        console.warn('Primary API failed, falling back to direct URL', apiError);
-        // Fallback to direct axios call
-        const fallbackResponse = await axios.get('/api/trips/user', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        const fallbackData = Array.isArray(fallbackResponse.data) ? 
-          fallbackResponse.data : 
-          (fallbackResponse.data?.trips || []);
-        setTrips(fallbackData);
+        console.log('Trying /api/trips/user/safe...');
+        const safeRes = await axios.get('http://localhost:5000/api/trips/user/safe', authConfig);
+        console.log('Safe endpoint response:', safeRes.data);
+        
+        if (safeRes.data?.success && Array.isArray(safeRes.data.trips)) {
+          console.log('Using data from safe endpoint');
+          const normalizedTrips = normalizeTrips(safeRes.data.trips);
+          console.log('Normalized trips:', normalizedTrips);
+          setTrips(normalizedTrips);
+          return;
+        }
+      } catch (safeErr) {
+        console.warn('Safe endpoint failed, trying primary endpoint', safeErr);
+      }
+
+      // Fallback to primary endpoint
+      try {
+        console.log('Trying /api/trips/user...');
+        const res = await axios.get('http://localhost:5000/api/trips/user', authConfig);
+        console.log('Primary endpoint response:', res.data);
+        
+        const tripsData = extractTripsData(res.data);
+        const normalizedTrips = normalizeTrips(tripsData);
+        console.log('Normalized trips from primary:', normalizedTrips);
+        setTrips(normalizedTrips);
+      } catch (primaryErr) {
+        console.warn('Primary endpoint failed, trying fallback...', primaryErr);
+        
+        // Final fallback to /api/trips?user=true
+        try {
+          console.log('Trying fallback /api/trips?user=true...');
+          const fallbackRes = await axios.get('http://localhost:5000/api/trips', {
+            params: { user: true },
+            ...authConfig,
+          });
+          console.log('Fallback response:', fallbackRes.data);
+          
+          const tripsData = extractTripsData(fallbackRes.data);
+          const normalizedTrips = normalizeTrips(tripsData);
+          console.log('Normalized trips from fallback:', normalizedTrips);
+          setTrips(normalizedTrips);
+        } catch (fallbackErr) {
+          console.error('All endpoints failed:', fallbackErr);
+          setError('Failed to load your trips. Please try again later.');
+        }
       }
     } catch (error) {
-      console.error('Error fetching trips:', error);
-      setError(error.response?.data?.message || 'Failed to load your trips. Please try again.');
-      
-      // Set dummy data if API fails
-      setTrips([
-        {
-          id: '1',
-          title: 'Summer Vacation',
-          destination: 'Bali, Indonesia',
-          start_date: new Date().toISOString(),
-          end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'upcoming',
-          total_budget: 2500,
-          image_url: 'https://example.com/bali.jpg'
-        }
-      ]);
+      console.error('Error in fetchTrips:', error);
+      setError('An unexpected error occurred. Please try again.');
+      // Set some sample data for development
+      setTrips([{
+        id: '1',
+        title: 'Sample Trip',
+        destination: 'Sample Destination',
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'upcoming',
+        total_budget: 2500,
+        image_url: 'https://example.com/bali.jpg'
+      }]);
     } finally {
       setLoading(false);
     }
@@ -269,14 +325,16 @@ const MyTrips = () => {
           <div className="trips-grid">
             {filteredTrips.map((trip) => {
               const status = getTripStatus(trip);
-              const duration = Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / (1000 * 60 * 60 * 24)) + ' days';
+              const duration = (trip.start_date && trip.end_date)
+                ? Math.ceil((new Date(trip.end_date) - new Date(trip.start_date)) / (1000 * 60 * 60 * 24)) + ' days'
+                : 'N/A';
               
               return (
                 <div key={trip.id} className="trip-card-modern">
                   <div className="trip-card-header">
                     <div className="trip-image-modern">
-                      {trip.coverImage ? (
-                        <img src={trip.coverImage} alt={trip.name} />
+                      {trip.image_url ? (
+                        <img src={trip.image_url} alt={trip.title} />
                       ) : (
                         <div className="trip-placeholder-modern">
                           <MapPin size={32} />
@@ -296,10 +354,10 @@ const MyTrips = () => {
 
                   <div className="trip-card-body">
                     <div className="trip-title-section">
-                      <h3 className="trip-title">{trip.name}</h3>
+                      <h3 className="trip-title">{trip.title || 'Trip'}</h3>
                       <div className="trip-location">
                         <MapPin size={16} />
-                        <span>{trip.destination || 'No destination set'}</span>
+                        <span>{trip.destination || 'Booked Trip'}</span>
                       </div>
                     </div>
                     
@@ -307,20 +365,11 @@ const MyTrips = () => {
                       <div className="trip-detail-item">
                         <Calendar size={16} />
                         <div className="detail-content">
-                          <span className="detail-label">Duration</span>
-                          <span className="detail-value">{duration}</span>
+                          <span className="detail-label">Dates</span>
+                          <span className="detail-value">{formatDate(trip.start_date)} → {formatDate(trip.end_date)}</span>
                         </div>
                       </div>
                       
-                      <div className="trip-detail-item">
-                        <DollarSign size={16} />
-                        <div className="detail-content">
-                          <span className="detail-label">Budget</span>
-                          <span className="detail-value">
-                            ${trip.budget?.toLocaleString() || '0'}
-                          </span>
-                        </div>
-                      </div>
                     </div>
                     
                     <div className="trip-actions-modern">
