@@ -4,11 +4,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.core.cache import cache
 from mongoengine.errors import NotUniqueError, DoesNotExist, ValidationError as MongoValidationError
-from .models import User
+from .models import User, OTP
 from .authentication import generate_jwt_token
 from .password_reset import PasswordResetToken, generate_reset_token, send_password_reset_email
-from .email_utils import send_verification_email
+from .email_utils import send_verification_email, send_otp_email
 import re
 from datetime import datetime, timedelta
 import logging
@@ -55,11 +56,17 @@ def signup(request):
         try:
             existing_user = User.objects.get(email=email)
             if not existing_user.is_verified:
-                # Resend verification email if user exists but isn't verified
-                send_verification_email(existing_user, request)
+                # Generate and send OTP
+                otp = OTP.create_otp(
+                    email=email,
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                send_otp_email(email, otp.otp)
+                
                 return Response({
                     'success': True,
-                    'message': 'A verification email has been sent to your email address. Please check your inbox.'
+                    'message': 'An OTP has been sent to your email address. Please check your inbox to complete verification.',
+                    'email': email
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({
@@ -77,12 +84,19 @@ def signup(request):
             user.set_password(password)
             user.save()
             
-            # Send verification email
-            send_verification_email(user, request)
+            # Generate and send OTP
+            otp = OTP.create_otp(
+                email=email,
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            # Send OTP via email
+            send_otp_email(email, otp.otp)
             
             return Response({
                 'success': True,
-                'message': 'A verification email has been sent to your email address. Please check your inbox to complete registration.'
+                'message': 'An OTP has been sent to your email address. Please check your inbox to complete registration.',
+                'email': email
             }, status=status.HTTP_201_CREATED)
         
     except NotUniqueError:
@@ -127,11 +141,18 @@ def login(request):
             }, status=status.HTTP_401_UNAUTHORIZED)
             
         if not user.is_verified:
-            # Resend verification email if not verified
-            send_verification_email(user, request)
+            # Generate and send OTP for verification
+            otp = OTP.create_otp(
+                email=email,
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            send_otp_email(email, otp.otp)
+            
             return Response({
                 'success': False,
-                'message': 'Please verify your email address before logging in. A new verification email has been sent.'
+                'message': 'Please verify your email address with the OTP sent to your email.',
+                'requires_otp_verification': True,
+                'email': email
             }, status=status.HTTP_403_FORBIDDEN)
             
         if not user.is_active:
@@ -181,6 +202,111 @@ def me(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_otp(request):
+    """Send OTP to user's email for verification"""
+    email = request.data.get('email', '').strip().lower()
+    
+    if not email or not validate_email(email):
+        return Response({
+            'success': False,
+            'message': 'Valid email is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Rate limiting: Check if user has requested OTP recently
+    cache_key = f'otp_send_{email}'
+    if cache.get(cache_key):
+        return Response({
+            'success': False,
+            'message': 'Please wait before requesting another OTP'
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+    
+    try:
+        # Create and send OTP
+        otp = OTP.create_otp(
+            email=email,
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        # Send OTP via email
+        send_otp_email(email, otp.otp)
+        
+        # Set rate limit (1 minute cooldown)
+        cache.set(cache_key, True, 60)
+        
+        return Response({
+            'success': True,
+            'message': 'OTP sent successfully',
+            'expires_in': 600  # 10 minutes in seconds
+        })
+        
+    except Exception as e:
+        logger.error(f'Error sending OTP: {str(e)}')
+        return Response({
+            'success': False,
+            'message': 'Failed to send OTP. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_otp(request):
+    """Verify OTP and mark email as verified"""
+    email = request.data.get('email', '').strip().lower()
+    otp = request.data.get('otp', '').strip()
+    
+    if not email or not validate_email(email):
+        return Response({
+            'success': False,
+            'message': 'Valid email is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    if not otp or not otp.isdigit() or len(otp) != 6:
+        return Response({
+            'success': False,
+            'message': 'Valid 6-digit OTP is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Find user by email
+        user = User.objects.get(email=email)
+        
+        # Verify OTP
+        if not OTP.verify_otp(email, otp):
+            return Response({
+                'success': False,
+                'message': 'Invalid or expired OTP'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Mark email as verified
+        user.is_verified = True
+        user.is_active = True
+        user.save()
+        
+        # Generate JWT token
+        token = generate_jwt_token(user)
+        
+        return Response({
+            'success': True,
+            'message': 'Email verified successfully',
+            'token': token,
+            'user': user.to_dict()
+        })
+        
+    except User.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'User not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error verifying OTP: {str(e)}')
+        return Response({
+            'success': False,
+            'message': 'Failed to verify OTP. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def verify_email(request):
@@ -227,8 +353,8 @@ def verify_email(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def resend_verification_email(request):
-    """Resend verification email to the authenticated user"""
+def resend_otp(request):
+    """Resend OTP to user's email"""
     try:
         user = request.user
         
@@ -238,22 +364,25 @@ def resend_verification_email(request):
                 'message': 'Email is already verified.'
             }, status=status.HTTP_400_BAD_REQUEST)
             
-        # Generate new verification token
-        user.generate_verification_token()
+        # Generate and send new OTP
+        otp = OTP.create_otp(
+            email=user.email,
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
         
-        # Send verification email
-        send_verification_email(user, request)
+        # Send OTP via email
+        send_otp_email(user.email, otp.otp)
         
         return Response({
             'success': True,
-            'message': 'A new verification email has been sent to your email address.'
+            'message': 'A new OTP has been sent to your email address.'
         })
         
     except Exception as e:
-        logger.error(f"Error in resend_verification_email: {str(e)}", exc_info=True)
+        logger.error(f'Error resending OTP: {str(e)}')
         return Response({
             'success': False,
-            'message': 'Failed to send verification email. Please try again.'
+            'message': 'Failed to resend OTP. Please try again.'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

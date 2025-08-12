@@ -8,6 +8,7 @@ import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
+import OTPVerification from './pages/OTPVerification';
 import EmailVerificationSuccess from './pages/EmailVerificationSuccess';
 import Dashboard from './pages/Dashboard';
 import BookTrip from './pages/BookTrip';
@@ -22,6 +23,7 @@ import UserProfile from './pages/UserProfile';
 import AdminDashboard from './pages/AdminDashboard';
 import Cities from './pages/Cities';
 import './App.css';
+import TripDetail from './pages/TripDetail';
 
 function App() {
   return (
@@ -32,6 +34,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/verify-otp" element={<OTPVerification />} />
             <Route path="/verify-email/success" element={<EmailVerificationSuccess />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -44,6 +47,7 @@ function App() {
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/book-trip" element={<BookTrip />} />
+                    <Route path="/trip/:id" element={<TripDetail />} />
                     <Route path="/my-trips" element={<MyTrips />} />
                     <Route path="/trip/:tripId/build" element={<ItineraryBuilder />} />
                     <Route path="/trip/:tripId/view" element={<ItineraryView />} />

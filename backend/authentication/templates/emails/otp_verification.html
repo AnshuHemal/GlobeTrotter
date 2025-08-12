@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Your Verification Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #dddddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .otp-code {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            color: #2c3e50;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Email Verification</h2>
+        <p>Hello,</p>
+        <p>Your verification code is:</p>
+        
+        <div class="otp-code">
+            {{ otp_code }}
+        </div>
+        
+        <p>This code will expire in {{ expiry_minutes }} minutes. Please do not share this code with anyone.</p>
+        
+        <p>If you didn't request this code, you can safely ignore this email.</p>
+        
+        <div class="footer">
+            <p>This is an automated message, please do not reply.</p>
+            <p>&copy; {% now "Y" %} GlobeTrotter. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -46,8 +46,8 @@ const Signup = () => {
       const result = await signup(formData.name, formData.email, formData.password);
       
       if (result.success) {
-        // Redirect to verification page with email
-        navigate('/verify-email', { 
+        // Redirect to OTP verification page with email
+        navigate('/verify-otp?email=' + encodeURIComponent(formData.email), { 
           state: { email: formData.email } 
         });
       } else {

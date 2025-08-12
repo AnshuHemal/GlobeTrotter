@@ -95,8 +95,23 @@ const BookTrip = () => {
           // Try new API service first
           response = await tripsApi.getPackages();
           console.log('Packages API response:', response);
+          
           // Handle both array response and nested data structure
-          const packagesData = Array.isArray(response.data) ? response.data : (response.data?.packages || []);
+          let packagesData = Array.isArray(response.data) ? response.data : (response.data?.packages || []);
+          
+          // Process each package to ensure consistent data structure
+          packagesData = packagesData.map(pkg => ({
+            ...pkg,
+            // Ensure price fields are numbers and have fallbacks
+            current_price: parseFloat(pkg.current_price || pkg.currentPrice || 0),
+            old_price: parseFloat(pkg.old_price || pkg.originalPrice || 0),
+            save_amount: parseFloat(pkg.save_amount || pkg.savings || 0),
+            // Ensure image URL is properly set
+            image_url: pkg.image_url || pkg.image || '',
+            // Ensure rating is a number
+            rating: parseFloat(pkg.rating) || 0
+          }));
+          
           console.log('Processed packages data:', packagesData);
           setPackages(packagesData);
         } catch (apiError) {
@@ -257,7 +272,12 @@ const BookTrip = () => {
 
         <div className="packages-grid">
           {filteredPackages.map((pkg) => (
-            <div key={pkg.id} className="package-card">
+            <div
+              key={pkg.id}
+              className="package-card"
+              onClick={() => navigate(`/trip/${pkg.id}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="package-image">
                 <img src={pkg.image_url || pkg.image} alt={pkg.title} />
                 <div className="package-rating">
@@ -272,17 +292,19 @@ const BookTrip = () => {
                 <p className="package-subtitle">{pkg.subtitle || pkg.location}</p>
                 
                 <div className="package-savings">
-                  Save ₹{pkg.save_amount?.toLocaleString() || pkg.savings?.toLocaleString() || 0}
+                  Save ₹{(pkg.save_amount || pkg.savings || 0).toLocaleString('en-IN')}
                 </div>
                 
                 <div className="package-pricing">
-                  <span className="current-price">₹ {pkg.current_price?.toLocaleString() || pkg.price?.toLocaleString() || 0}</span>
-                  <span className="original-price">₹ {pkg.old_price?.toLocaleString() || pkg.originalPrice?.toLocaleString() || 0}</span>
+                  <span className="current-price">₹ {(pkg.current_price || pkg.currentPrice || 0).toLocaleString('en-IN')}</span>
+                  {(pkg.old_price || pkg.originalPrice) > (pkg.current_price || pkg.currentPrice) && (
+                    <span className="original-price">₹ {(pkg.old_price || pkg.originalPrice || 0).toLocaleString('en-IN')}</span>
+                  )}
                 </div>
                 
                 <button 
                   className="book-btn"
-                  onClick={() => handleBookPackage(pkg.id)}
+                  onClick={(e) => { e.stopPropagation(); handleBookPackage(pkg.id); }}
                   disabled={bookingStatus[pkg.id] === 'booking'}
                 >
                   {bookingStatus[pkg.id] === 'booking' ? (

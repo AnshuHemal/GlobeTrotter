@@ -2,6 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .package_models import TravelPackage
+from bson import ObjectId
 
 
 @api_view(['GET'])
@@ -23,6 +24,30 @@ def get_travel_packages(request):
             'success': False,
             'message': 'Failed to fetch travel packages',
             'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_trip_details(request, trip_id: str):
+    """Get single trip details by ID"""
+    try:
+        # Convert to ObjectId for MongoDB if possible
+        obj_id = ObjectId(trip_id)
+        trip = TravelPackage.objects.get(id=obj_id)
+        return Response({
+            'success': True,
+            'trip': trip.to_dict(),
+        }, status=status.HTTP_200_OK)
+    except TravelPackage.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Trip not found',
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'message': 'Error fetching trip details',
+            'error': str(e),
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

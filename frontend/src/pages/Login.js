@@ -94,22 +94,24 @@ const Login = () => {
     try {
       const result = await login(formData.email, formData.password);
       
+      if (result.redirectTo) {
+        // Redirect to OTP verification page if email needs verification
+        navigate(result.redirectTo);
+        return;
+      }
+      
       if (result.success) {
-        navigate('/dashboard');
-      } else if (result.requiresVerification) {
-        // Redirect to verification page with email
-        navigate('/verify-email', { 
-          state: { 
-            email: formData.email,
-            message: result.message || 'Please verify your email before logging in.'
-          } 
-        });
+        setSuccess('Login successful! Redirecting...');
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
       } else {
         setError(result.message || 'Login failed. Please try again.');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('An error occurred during login. Please try again.');
+      setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

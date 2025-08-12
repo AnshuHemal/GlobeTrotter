@@ -1,9 +1,11 @@
-from mongoengine import Document, StringField, EmailField, DateTimeField, BooleanField, ReferenceField
+from mongoengine import Document, StringField, EmailField, DateTimeField, BooleanField, ReferenceField, IntField
 from datetime import datetime, timedelta
 import bcrypt
 import secrets
 from django.conf import settings
 import uuid
+import random
+from django.core.cache import cache
 
 
 class User(Document):
@@ -81,7 +83,67 @@ class User(Document):
             'name': self.name,
             'email': self.email,
             'is_active': self.is_active,
+            'is_verified': self.is_verified,
             'is_admin': self.is_admin,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+
+
+class OTP(Document):
+    """OTP model for email verification"""
+    email = EmailField(required=True)
+    otp = StringField(required=True, max_length=6)
+    created_at = DateTimeField(default=datetime.utcnow)
+    expires_at = DateTimeField(required=True)
+    is_used = BooleanField(default=False)
+    ip_address = StringField()
+    
+    meta = {
+        'collection': 'otps',
+        'indexes': [
+            {'fields': ['email'], 'expireAfterSeconds': 3600},  # Auto-expire after 1 hour
+            {'fields': ['expires_at'], 'expireAfterSeconds': 0}  # TTL index
+        ]
+    }
+    
+    def is_valid(self):
+        """Check if OTP is valid and not expired"""
+        return not self.is_used and datetime.utcnow() < self.expires_at
+    
+    def mark_used(self):
+        """Mark OTP as used"""
+        self.is_used = True
+        self.save()
+    
+    @classmethod
+    def create_otp(cls, email, ip_address):
+        """Create a new OTP for the given email"""
+        # Delete any existing OTPs for this email
+        cls.objects(email=email).delete()
+        
+        # Generate a 6-digit OTP
+        otp = str(random.randint(100000, 999999))
+        expires_at = datetime.utcnow() + timedelta(minutes=10)  # OTP valid for 10 minutes
+        
+        return cls.objects.create(
+            email=email,
+            otp=otp,
+            expires_at=expires_at,
+            ip_address=ip_address
+        )
+    
+    @classmethod
+    def verify_otp(cls, email, otp):
+        """Verify OTP and mark as used if valid"""
+        try:
+            otp_obj = cls.objects.get(
+                email=email,
+                otp=otp,
+                is_used=False,
+                expires_at__gt=datetime.utcnow()
+            )
+            otp_obj.mark_used()
+            return True
+        except (cls.DoesNotExist, Exception):
+            return False

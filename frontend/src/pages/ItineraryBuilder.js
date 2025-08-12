@@ -10,6 +10,7 @@ import {
   Trash2
 } from 'lucide-react';
 import './ItineraryBuilder.css';
+import { Eye } from 'lucide-react';
 
 const ItineraryBuilder = () => {
   const { tripId } = useParams();

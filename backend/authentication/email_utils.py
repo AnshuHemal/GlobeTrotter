@@ -7,6 +7,50 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+def send_otp_email(email, otp_code):
+    """
+    Send an email with OTP code to the user.
+    
+    Args:
+        email: User's email address
+        otp_code: The 6-digit OTP code
+    """
+    try:
+        subject = 'Your Verification Code'
+        
+        # Render HTML email template
+        html_message = render_to_string('emails/otp_verification.html', {
+            'otp_code': otp_code,
+            'expiry_minutes': 10  # OTP expires in 10 minutes
+        })
+        
+        # Plain text version of the email
+        plain_message = f"""
+        Your verification code is: {otp_code}
+        
+        This code will expire in 10 minutes.
+        
+        If you didn't request this code, you can safely ignore this email.
+        """.strip()
+        
+        # Send email
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        
+        logger.info(f"OTP email sent to {email}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error sending OTP email to {email}: {str(e)}")
+        return False
+
 def send_verification_email(user, request=None):
     """
     Send an email with a verification link to the user.

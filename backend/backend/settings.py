@@ -158,11 +158,23 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+CORS_ALLOW_ALL_ORIGINS = False  # More secure to specify allowed origins
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # JWT Configuration
 JWT_SECRET_KEY = SECRET_KEY
@@ -171,27 +183,31 @@ JWT_EXPIRATION_DELTA = 86400  # 24 hours in seconds
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Update with your SMTP server
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@gmail.com'  # Update with your email
-EMAIL_HOST_PASSWORD = 'your-app-password'  # Use an App Password for Gmail
-DEFAULT_FROM_EMAIL = 'your-email@gmail.com'  # Update with your email
-
-# Frontend URL for password reset links
-# Frontend URL
-FRONTEND_URL = 'http://localhost:3000'  # Update with your frontend URL
-
-# Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'trotterglobeofficial@gmail.com'  # Your Gmail address
-EMAIL_HOST_PASSWORD = 'usdl jraa posg glvm'  # Your Gmail App Password
+EMAIL_HOST_PASSWORD = 'usdljraaposgglvm'  # Your Gmail App Password
 DEFAULT_FROM_EMAIL = 'GlobeTrotter <trotterglobeofficial@gmail.com>'
+
+# Backend URL for API endpoints
+BACKEND_URL = 'http://localhost:5000'  # Your Django backend URL
+
+# Frontend URL for password reset links
+FRONTEND_URL = 'http://localhost:3000'  # Your frontend URL
 
 # Email verification settings
 EMAIL_VERIFICATION_TIMEOUT_DAYS = 1  # Token expiration in days
+
+# Email timeout settings
+EMAIL_TIMEOUT = 10  # seconds
+
+# Cache configuration for OTP rate limiting
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'otp-ratelimit',
+    }
+}
 
 # Using MongoEngine for user management instead of Django's built-in User model

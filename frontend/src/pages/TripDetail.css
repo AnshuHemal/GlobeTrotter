@@ -1,0 +1,318 @@
+/* Trip Detail Page Styles */
+.trip-detail {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Prevent accidental horizontal scroll on full-bleed sections */
+.trip-detail {
+    overflow-x: hidden;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: #4a90e2;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 2rem;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.back-button:hover {
+    background-color: #f5f5f5;
+}
+
+.trip-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.trip-gallery {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.trip-main-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+}
+
+.trip-info {
+    padding: 1rem;
+}
+
+.trip-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.trip-subtitle {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.trip-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.trip-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.trip-rating {
+    color: #ff8c00;
+    font-weight: 500;
+}
+
+.trip-pricing {
+    background: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+}
+
+.price-container {
+    margin-bottom: 1.5rem;
+}
+
+.current-price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2e7d32;
+    margin-right: 1rem;
+}
+
+.original-price {
+    font-size: 1.2rem;
+    color: #999;
+    text-decoration: line-through;
+}
+
+.book-now-btn {
+    width: 100%;
+    padding: 1rem;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.book-now-btn:hover {
+    background-color: #3d8b40;
+}
+
+.trip-details {
+    margin-top: 3rem;
+}
+
+.trip-details h2 {
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #eee;
+}
+
+.trip-description {
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+    color: #444;
+}
+
+/* Make details section span full container width by compensating parent padding */
+.trip-details.full-bleed {
+    margin-left: -2rem;
+    margin-right: -2rem;
+    padding: 1.5rem 2rem;
+    background: #fff;
+    border-top: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.trip-detail-loading,
+.trip-detail-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    text-align: center;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #4caf50;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .trip-header {
+        grid-template-columns: 1fr;
+    }
+
+    .trip-main-image {
+        height: 300px;
+    }
+
+    .trip-meta {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+}
+
+/* Itinerary Section */
+.trip-itinerary {
+    margin-top: 2rem;
+}
+
+.trip-itinerary h2 {
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #eee;
+}
+
+.itinerary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.itinerary-card {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #F3F4F6;
+    height: 450px;
+}
+
+.itinerary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: #E5E7EB;
+}
+
+.itinerary-image-wrap {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+}
+
+.itinerary-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.itinerary-card:hover .itinerary-image {
+    transform: scale(1.05);
+}
+
+.itinerary-day-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+}
+
+.itinerary-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0vh !important;
+}
+
+.itinerary-title {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+
+.itinerary-desc {
+    margin: 0;
+    color: #555;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 1100px) {
+    .itinerary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .trip-details.full-bleed {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding: 1rem;
+    }
+
+    .itinerary-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .itinerary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .itinerary-image {
+        height: 160px;
+    }
+
+    .trip-details.full-bleed {
+        margin-left: -1rem;
+        margin-right: -1rem;
+    }
+}

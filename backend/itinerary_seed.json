@@ -1,0 +1,274 @@
+[
+  {
+    "title": "Bali Group Trip",
+    "subtitle": "With Ubud & Gili Island",
+    "duration": "6 Days 7 Nights",
+    "description": "Discover Bali’s culture and beaches with a balanced plan of nature, culture, and leisure.",
+    "current_price": 45900,
+    "old_price": 52100,
+    "save_amount": 6200,
+    "image_url": "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1",
+    "rating": 4.9,
+    "category": "Beach",
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "title": "Arrival in Bali",
+        "description": "Airport pickup, hotel check-in, evening welcome dinner in Seminyak.",
+        "image_url": "https://images.unsplash.com/photo-1526772662000-3f88f10405ff"
+      },
+      {
+        "day": "Day 2",
+        "title": "Ubud & Rice Terraces",
+        "description": "Tegallalang rice terraces, Ubud Palace, Monkey Forest, Kecak dance.",
+        "image_url": "https://images.unsplash.com/photo-1518544801976-3e159e50e5bb"
+      },
+      {
+        "day": "Day 3",
+        "title": "Waterfalls & Temple",
+        "description": "Tegenungan waterfall, Tirta Empul temple purification ritual.",
+        "image_url": "https://images.unsplash.com/photo-1526481280698-8fcc13fd74ed"
+      },
+      {
+        "day": "Day 4",
+        "title": "Nusa Penida Highlights",
+        "description": "Kelingking Beach, Broken Beach, Crystal Bay snorkeling.",
+        "image_url": "https://images.unsplash.com/photo-1543248939-f8cf3f7b3712"
+      },
+      {
+        "day": "Day 5",
+        "title": "Gili Island Day",
+        "description": "Fast boat to Gili, beach time & snorkeling with turtles.",
+        "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+      },
+      {
+        "day": "Day 6",
+        "title": "Beach Leisure & Departure",
+        "description": "Free morning at Seminyak beach, airport transfer.",
+        "image_url": "https://images.unsplash.com/photo-1500375592092-40eb2168fd21"
+      }
+    ]
+  },
+  {
+    "title": "Thailand Full Moon Party",
+    "subtitle": "with Phuket, Krabi & Ko Samui",
+    "duration": "7 Days 6 Nights",
+    "description": "Experience Thailand’s beaches, nightlife, and iconic Full Moon Party.",
+    "current_price": 42850,
+    "old_price": 47050,
+    "save_amount": 5000,
+    "image_url": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4",
+    "rating": 4.8,
+    "category": "Adventure",
+    "itinerary": [
+      {
+        "day": "Day 1",
+        "title": "Arrival in Phuket",
+        "description": "Airport pickup, Patong beach walk, welcome dinner.",
+        "image_url": "https://images.unsplash.com/photo-1505764706515-aa95265c5abc"
+      },
+      {
+        "day": "Day 2",
+        "title": "Phi Phi Island Tour",
+        "description": "Speedboat to Maya Bay, snorkeling at Pileh Lagoon.",
+        "image_url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee"
+      },
+      {
+        "day": "Day 3",
+        "title": "Transfer to Ko Samui",
+        "description": "Travel to Ko Samui, evening Fisherman’s Village.",
+        "image_url": "https://images.unsplash.com/photo-1472214103451-9374bd1c798e"
+      },
+      {
+        "day": "Day 4",
+        "title": "Ang Thong Marine Park",
+        "description": "Kayaking, snorkeling, viewpoint hike.",
+        "image_url": "https://images.unsplash.com/photo-1493558103817-58b2924bce98"
+      },
+      {
+        "day": "Day 5",
+        "title": "Full Moon Party (Ko Pha Ngan)",
+        "description": "Evening ferry, neon party night on Haad Rin beach.",
+        "image_url": "https://images.unsplash.com/photo-1487180144351-b8472da7d491"
+      },
+      {
+        "day": "Day 6",
+        "title": "Relax & Spa",
+        "description": "Free day for massages, beach sunset.",
+        "image_url": "https://images.unsplash.com/photo-1499184941280-0f42ed6f2a2b"
+      },
+      {
+        "day": "Day 7",
+        "title": "Departure",
+        "description": "Return to Phuket/airport transfer.",
+        "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e"
+      }
+    ]
+  },
+  {
+    "title": "Vietnam Group Trip",
+    "subtitle": "Ho Chi Minh, Da Nang, Hoi An, Hanoi",
+    "duration": "8 Days 7 Nights",
+    "description": "Culture-rich journey through Vietnam from south to north.",
+    "current_price": 45850,
+    "old_price": 50850,
+    "save_amount": 5000,
+    "image_url": "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b",
+    "rating": 4.7,
+    "category": "Cultural",
+    "itinerary": [
+      { "day": "Day 1", "title": "Arrival in Ho Chi Minh City", "description": "Ben Thanh Market, Pho dinner.", "image_url": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c" },
+      { "day": "Day 2", "title": "Cu Chi Tunnels & City Tour", "description": "War Remnants Museum, Notre-Dame Cathedral.", "image_url": "https://images.unsplash.com/photo-1529257414772-1960d86e8f8f" },
+      { "day": "Day 3", "title": "Da Nang Transfer & Beach", "description": "Flight to Da Nang, My Khe Beach sunset.", "image_url": "https://images.unsplash.com/photo-1482192505345-5655af888cc4" },
+      { "day": "Day 4", "title": "Hoi An Ancient Town", "description": "Lantern streets, tailor shops, river cruise.", "image_url": "https://images.unsplash.com/photo-1528181917344-8f34d86b257f" },
+      { "day": "Day 5", "title": "Ba Na Hills", "description": "Golden Bridge, cable car, fantasy park.", "image_url": "https://images.unsplash.com/photo-1536240478700-b869070f9279" },
+      { "day": "Day 6", "title": "Fly to Hanoi", "description": "Old Quarter walk, egg coffee.", "image_url": "https://images.unsplash.com/photo-1501419737817-0b4a9ce63a2e" },
+      { "day": "Day 7", "title": "Ha Long Bay Cruise", "description": "Day cruise, kayaking, limestone caves.", "image_url": "https://images.unsplash.com/photo-1544984243-ec57ea16fe25" },
+      { "day": "Day 8", "title": "Departure", "description": "Airport transfer.", "image_url": "https://images.unsplash.com/photo-1469474968028-56623f02e42e" }
+    ]
+  },
+  {
+    "title": "Japan Highlights",
+    "subtitle": "Tokyo, Kyoto & Osaka",
+    "duration": "7 Days 6 Nights",
+    "description": "From neon-lit Tokyo to timeless Kyoto and foodie Osaka.",
+    "current_price": 98500,
+    "old_price": 106500,
+    "save_amount": 8000,
+    "image_url": "https://images.unsplash.com/photo-1505069042741-93bb3fc2f8a3",
+    "rating": 4.9,
+    "category": "Cultural",
+    "itinerary": [
+      { "day": "Day 1", "title": "Arrive Tokyo", "description": "Shibuya Crossing, Hachiko statue, Izakaya dinner.", "image_url": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf" },
+      { "day": "Day 2", "title": "Asakusa & Skytree", "description": "Senso-ji temple, Sumida views, Akihabara.", "image_url": "https://images.unsplash.com/photo-1498654200943-1088dd4438ae" },
+      { "day": "Day 3", "title": "Kyoto Temples", "description": "Fushimi Inari, Kiyomizu-dera, Gion evening walk.", "image_url": "https://images.unsplash.com/photo-1504788363733-507549153474" },
+      { "day": "Day 4", "title": "Arashiyama & Nara", "description": "Bamboo Grove, Togetsukyo, Nara Deer Park.", "image_url": "https://images.unsplash.com/photo-1545569341-9eb8b30979d9" },
+      { "day": "Day 5", "title": "Osaka Food Tour", "description": "Dotonbori, takoyaki, Osaka Castle.", "image_url": "https://images.unsplash.com/photo-1549692520-acc6669e2f0c" },
+      { "day": "Day 6", "title": "Universal Studios or Free Day", "description": "Theme park fun or shopping in Umeda.", "image_url": "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc" },
+      { "day": "Day 7", "title": "Departure", "description": "Bullet train back to Tokyo, fly out.", "image_url": "https://images.unsplash.com/photo-1526481280698-8fcc13fd74ed" }
+    ]
+  },
+  {
+    "title": "Swiss Alps Escape",
+    "subtitle": "Interlaken, Zermatt & Lucerne",
+    "duration": "6 Days 5 Nights",
+    "description": "Mountains, lakes, and scenic trains through Switzerland.",
+    "current_price": 124900,
+    "old_price": 132900,
+    "save_amount": 8000,
+    "image_url": "https://images.unsplash.com/photo-1491553895911-0055eca6402d",
+    "rating": 4.8,
+    "category": "Nature",
+    "itinerary": [
+      { "day": "Day 1", "title": "Arrive Zurich & Interlaken", "description": "Train to Interlaken, Lake Thun sunset.", "image_url": "https://images.unsplash.com/photo-1501785888041-af3ef285b470" },
+      { "day": "Day 2", "title": "Jungfraujoch Top of Europe", "description": "Cogwheel train, ice palace, views.", "image_url": "https://images.unsplash.com/photo-1491553895911-0055eca6402d" },
+      { "day": "Day 3", "title": "Zermatt & Matterhorn", "description": "Glacier Express segment, Gornergrat.", "image_url": "https://images.unsplash.com/photo-1509644851110-27f6a5f3cd36" },
+      { "day": "Day 4", "title": "Lucerne Old Town", "description": "Chapel Bridge, Lion Monument, lake cruise.", "image_url": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29" },
+      { "day": "Day 5", "title": "Mount Titlis or Pilatus", "description": "Cable car rides, cliff walks, snow fun.", "image_url": "https://images.unsplash.com/photo-1521292270410-a8c0f7aa4c2b" },
+      { "day": "Day 6", "title": "Departure", "description": "Return to Zurich.", "image_url": "https://images.unsplash.com/photo-1491553895911-0055eca6402d" }
+    ]
+  },
+  {
+    "title": "Greek Islands Hopper",
+    "subtitle": "Athens, Santorini & Mykonos",
+    "duration": "7 Days 6 Nights",
+    "description": "Whitewashed villages, sunsets, and Aegean vibes.",
+    "current_price": 84500,
+    "old_price": 90500,
+    "save_amount": 6000,
+    "image_url": "https://images.unsplash.com/photo-1504643039591-52948e3ddb7e",
+    "rating": 4.7,
+    "category": "Beach",
+    "itinerary": [
+      { "day": "Day 1", "title": "Arrive Athens", "description": "Plaka walk, Greek taverna.", "image_url": "https://images.unsplash.com/photo-1539902741731-a57f1d0b5f5b" },
+      { "day": "Day 2", "title": "Acropolis & Museum", "description": "Parthenon, Acropolis Museum.", "image_url": "https://images.unsplash.com/photo-1555992336-03a23c7b20d6" },
+      { "day": "Day 3", "title": "Santorini Transfer", "description": "Oia sunset, blue domes.", "image_url": "https://images.unsplash.com/photo-1509316785289-025f5b846b35" },
+      { "day": "Day 4", "title": "Caldera Cruise", "description": "Volcano, hot springs, Thirassia.", "image_url": "https://images.unsplash.com/photo-1558981403-c5f9899de8f9" },
+      { "day": "Day 5", "title": "Mykonos Beaches", "description": "Windmills, Little Venice, Paradise Beach.", "image_url": "https://images.unsplash.com/photo-1520275126937-9506f7dd123c" },
+      { "day": "Day 6", "title": "Free Day", "description": "Beach clubs or Delos excursion.", "image_url": "https://images.unsplash.com/photo-1519068737630-e5db30e12e42" },
+      { "day": "Day 7", "title": "Departure", "description": "Fly out via Athens.", "image_url": "https://images.unsplash.com/photo-1544984243-ec57ea16fe25" }
+    ]
+  },
+  {
+    "title": "Dubai Luxe Break",
+    "subtitle": "Skyline, Desert & Marina",
+    "duration": "5 Days 4 Nights",
+    "description": "Iconic skyscrapers and Arabian desert adventures.",
+    "current_price": 58500,
+    "old_price": 63500,
+    "save_amount": 5000,
+    "image_url": "https://images.unsplash.com/photo-1526481280698-8fcc13fd74ed",
+    "rating": 4.6,
+    "category": "City",
+    "itinerary": [
+      { "day": "Day 1", "title": "Arrive & Downtown", "description": "Dubai Mall, Burj Khalifa views, fountain show.", "image_url": "https://images.unsplash.com/photo-1526481280698-8fcc13fd74ed" },
+      { "day": "Day 2", "title": "Desert Safari", "description": "Dune bashing, camel rides, BBQ dinner.", "image_url": "https://images.unsplash.com/photo-1518684079-3c830dcef090" },
+      { "day": "Day 3", "title": "Old Dubai", "description": "Abra ride, Spice & Gold Souks, Al Fahidi.", "image_url": "https://images.unsplash.com/photo-1546412414-8035e1776c9c" },
+      { "day": "Day 4", "title": "Marina & JBR", "description": "Ain Dubai, beach time, yacht cruise optional.", "image_url": "https://images.unsplash.com/photo-1543349689-9a4d426bee8c" },
+      { "day": "Day 5", "title": "Departure", "description": "Free morning, airport drop.", "image_url": "https://images.unsplash.com/photo-1544984243-ec57ea16fe25" }
+    ]
+  },
+  {
+    "title": "Spain Explorer",
+    "subtitle": "Barcelona, Madrid & Seville",
+    "duration": "8 Days 7 Nights",
+    "description": "Gaudí art, royal palaces, and flamenco nights.",
+    "current_price": 78900,
+    "old_price": 84900,
+    "save_amount": 6000,
+    "image_url": "https://images.unsplash.com/photo-1458400411386-5ae465c4e57e",
+    "rating": 4.7,
+    "category": "Cultural",
+    "itinerary": [
+      { "day": "Day 1", "title": "Arrive Barcelona", "description": "Gothic Quarter stroll.", "image_url": "https://images.unsplash.com/photo-1499856871958-5b9627545d1a" },
+      { "day": "Day 2", "title": "Gaudí Day", "description": "Sagrada Família, Park Güell.", "image_url": "https://images.unsplash.com/photo-1519681393784-d120267933ba" },
+      { "day": "Day 3", "title": "Madrid Transfer", "description": "Royal Palace, Prado Museum.", "image_url": "https://images.unsplash.com/photo-1569429596105-5ab06f0f590d" },
+      { "day": "Day 4", "title": "Toledo or Segovia", "description": "Day trip options.", "image_url": "https://images.unsplash.com/photo-1464790719320-516ecd75af6c" },
+      { "day": "Day 5", "title": "Seville", "description": "Plaza de España, Alcázar, flamenco.", "image_url": "https://images.unsplash.com/photo-1549399542-7e3f8b79c341" },
+      { "day": "Day 6", "title": "Cordoba Option", "description": "Mezquita & old town.", "image_url": "https://images.unsplash.com/photo-1528150177509-6f172c7b1e46" },
+      { "day": "Day 7", "title": "Tapas & Markets", "description": "Food tour finale.", "image_url": "https://images.unsplash.com/photo-1530554764233-e79e16c91d08" },
+      { "day": "Day 8", "title": "Departure", "description": "Fly out from Madrid.", "image_url": "https://images.unsplash.com/photo-1544984243-ec57ea16fe25" }
+    ]
+  },
+  {
+    "title": "Morocco Desert Circuit",
+    "subtitle": "Marrakech, Sahara & Fes",
+    "duration": "7 Days 6 Nights",
+    "description": "Medinas, kasbahs, and Sahara dunes under the stars.",
+    "current_price": 68900,
+    "old_price": 73900,
+    "save_amount": 5000,
+    "image_url": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c",
+    "rating": 4.6,
+    "category": "Adventure",
+    "itinerary": [
+      { "day": "Day 1", "title": "Arrive Marrakech", "description": "Jemaa el-Fnaa, souks.", "image_url": "https://images.unsplash.com/photo-1509099836639-18ba1795216d" },
+      { "day": "Day 2", "title": "Atlas Mountains", "description": "Ait Benhaddou & Ouarzazate.", "image_url": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957" },
+      { "day": "Day 3", "title": "Sahara Camp", "description": "Camel trek, Berber camp.", "image_url": "https://images.unsplash.com/photo-1502197996753-841c4e17016f" },
+      { "day": "Day 4", "title": "Merzouga to Todra", "description": "Gorges and kasbahs.", "image_url": "https://images.unsplash.com/photo-1500043357865-c6b8827edf60" },
+      { "day": "Day 5", "title": "Fes Medina", "description": "Tanneries, madrasas.", "image_url": "https://images.unsplash.com/photo-1519682577862-22b62b24e493" },
+      { "day": "Day 6", "title": "Chefchaouen Option", "description": "Blue city photoshoot.", "image_url": "https://images.unsplash.com/photo-1544984243-ec57ea16fe25" },
+      { "day": "Day 7", "title": "Departure", "description": "Fly out from Marrakech or Fes.", "image_url": "https://images.unsplash.com/photo-1544984243-ec57ea16fe25" }
+    ]
+  },
+  {
+    "title": "Nepal Himalayan Getaway",
+    "subtitle": "Kathmandu, Pokhara & Annapurna Views",
+    "duration": "6 Days 5 Nights",
+    "description": "Temples, lakes, and sunrise over the Himalayas.",
+    "current_price": 49500,
+    "old_price": 54500,
+    "save_amount": 5000,
+    "image_url": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c",
+    "rating": 4.7,
+    "category": "Nature",
+    "itinerary": [
+      { "day": "Day 1", "title": "Arrive Kathmandu", "description": "Durbar Square, Thamel.", "image_url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee" },
+      { "day": "Day 2", "title": "Heritage Tour", "description": "Pashupatinath, Boudhanath, Swayambhunath.", "image_url": "https://images.unsplash.com/photo-1548013146-72479768bada" },
+      { "day": "Day 3", "title": "Drive to Pokhara", "description": "Lakeside stroll.", "image_url": "https://images.unsplash.com/photo-1516939884455-1445c8652f83" },
+      { "day": "Day 4", "title": "Sarangkot Sunrise", "description": "Annapurna views, boating on Phewa.", "image_url": "https://images.unsplash.com/photo-1526482621092-2fda9f4b3f84" },
+      { "day": "Day 5", "title": "Adventure Day", "description": "Paragliding or Zipline.", "image_url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee" },
+      { "day": "Day 6", "title": "Departure", "description": "Back to Kathmandu, fly out.", "image_url": "https://images.unsplash.com/photo-1544984243-ec57ea16fe25" }
+    ]
+  }
+]

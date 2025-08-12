@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, FloatField, IntField
+from mongoengine import Document, StringField, FloatField, IntField, ListField, DictField
 
 
 class TravelPackage(Document):
@@ -14,6 +14,7 @@ class TravelPackage(Document):
     image_url = StringField(required=True, max_length=500)
     rating = FloatField(default=0.0)
     category = StringField(max_length=100)  # e.g., 'Adventure', 'Cultural', 'Beach'
+    itinerary = ListField(DictField(), default=[])
     
     meta = {
         'collection': 'travel_packages',
@@ -28,10 +29,16 @@ class TravelPackage(Document):
             'subtitle': self.subtitle,
             'duration': self.duration,
             'description': self.description,
-            'currentPrice': self.current_price,
-            'originalPrice': self.old_price,
-            'savings': self.save_amount,
-            'image': self.image_url,
-            'rating': self.rating,
-            'category': self.category
+            'current_price': float(self.current_price) if self.current_price is not None else 0.0,
+            'old_price': float(self.old_price) if self.old_price is not None else 0.0,
+            'save_amount': float(self.save_amount) if self.save_amount is not None else 0.0,
+            'image_url': self.image_url,
+            'rating': float(self.rating) if self.rating is not None else 0.0,
+            'category': self.category,
+            'itinerary': self.itinerary or [],
+            # Add aliases for frontend compatibility
+            'currentPrice': float(self.current_price) if self.current_price is not None else 0.0,
+            'originalPrice': float(self.old_price) if self.old_price is not None else 0.0,
+            'savings': float(self.save_amount) if self.save_amount is not None else 0.0,
+            'image': self.image_url
         }

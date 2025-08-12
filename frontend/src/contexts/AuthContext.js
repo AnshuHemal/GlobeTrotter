@@ -18,6 +18,8 @@ export const AuthProvider = ({ children }) => {
 
   // Configure axios defaults
   axios.defaults.baseURL = 'http://localhost:5000';
+  axios.defaults.withCredentials = true;
+  axios.defaults.headers.common['Content-Type'] = 'application/json';
   
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -81,20 +83,21 @@ export const AuthProvider = ({ children }) => {
           response = await axios.post('/api/auth/login', { email, password });
         }
         
-        // Handle case where email needs verification
-        if (response.data.message && response.data.message.includes('verify your email')) {
+        const { token: authToken, user } = response.data;
+        
+        // Check if user is verified
+        if (user && !user.is_verified) {
           return { 
             success: false, 
-            requiresVerification: true,
-            message: response.data.message 
+            redirectTo: '/verify-otp?email=' + encodeURIComponent(email),
+            message: 'Please verify your email with the OTP sent to your email.'
           };
         }
-        
-        const { token: authToken, user } = response.data;
         
         localStorage.setItem('token', authToken);
         axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
         setUser(user);
+        
         return { success: true };
       }
     } catch (error) {
@@ -116,7 +119,7 @@ export const AuthProvider = ({ children }) => {
       let response;
       try {
         // Try new API service first
-        response = await authApi.signup(name, email, password);
+        response = await authApi.register({ name, email, password });
       } catch (apiError) {
         console.warn('Primary API failed, falling back to direct URL', apiError);
         // Fallback to direct axios call
@@ -157,13 +160,60 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const verifyOtp = async (email, otp) => {
+    try {
+      console.log('Verifying OTP for:', email);
+      const response = await axios.post('/api/auth/verify-otp', {
+        email,
+        otp
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('OTP verification response:', response.data);
+
+      if (response.data.token) {
+        // Save token and update auth state
+        const { token, user } = response.data;
+        localStorage.setItem('token', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setUser(user);
+        
+        return { 
+          success: true, 
+          message: 'Email verified successfully',
+          user
+        };
+      }
+      
+      return { 
+        success: false, 
+        message: response.data?.message || 'OTP verification failed. Please try again.' 
+      };
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'An error occurred during OTP verification. Please try again.' 
+      };
+    }
+  };
+
   const value = {
     user,
     loading,
     login,
     signup,
     logout,
-    resendVerificationEmail
+    resendVerificationEmail,
+    verifyOtp
   };
 
   return (
