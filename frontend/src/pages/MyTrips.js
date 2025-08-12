@@ -61,80 +61,67 @@ const MyTrips = () => {
 
   const fetchTrips = async () => {
     console.log('Starting to fetch trips...');
+    setLoading(true);
+    setError('');
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Authentication required. Please log in.');
+      setLoading(false);
+      return;
+    }
+
+    const authConfig = {
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      withCredentials: true,
+    };
+
     try {
-      setLoading(true);
-      setError('');
-
-      const token = localStorage.getItem('token');
-      console.log('Using token from localStorage:', token ? 'yes' : 'no');
+      console.log('Fetching user trips from /api/trips/user/...');
+      const response = await axios.get('http://localhost:5000/api/trips/user/', authConfig);
       
-      const authConfig = {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        withCredentials: true,
-      };
-
-      // Try the safe endpoint first (always returns 200)
-      try {
-        console.log('Trying /api/trips/user/safe...');
-        const safeRes = await axios.get('http://localhost:5000/api/trips/user/safe', authConfig);
-        console.log('Safe endpoint response:', safeRes.data);
-        
-        if (safeRes.data?.success && Array.isArray(safeRes.data.trips)) {
-          console.log('Using data from safe endpoint');
-          const normalizedTrips = normalizeTrips(safeRes.data.trips);
-          console.log('Normalized trips:', normalizedTrips);
-          setTrips(normalizedTrips);
-          return;
-        }
-      } catch (safeErr) {
-        console.warn('Safe endpoint failed, trying primary endpoint', safeErr);
-      }
-
-      // Fallback to primary endpoint
-      try {
-        console.log('Trying /api/trips/user...');
-        const res = await axios.get('http://localhost:5000/api/trips/user', authConfig);
-        console.log('Primary endpoint response:', res.data);
-        
-        const tripsData = extractTripsData(res.data);
-        const normalizedTrips = normalizeTrips(tripsData);
-        console.log('Normalized trips from primary:', normalizedTrips);
+      if (response.data?.success && Array.isArray(response.data.trips)) {
+        console.log('Successfully fetched user trips:', response.data.trips);
+        const normalizedTrips = normalizeTrips(response.data.trips);
         setTrips(normalizedTrips);
-      } catch (primaryErr) {
-        console.warn('Primary endpoint failed, trying fallback...', primaryErr);
-        
-        // Final fallback to /api/trips?user=true
-        try {
-          console.log('Trying fallback /api/trips?user=true...');
-          const fallbackRes = await axios.get('http://localhost:5000/api/trips', {
-            params: { user: true },
-            ...authConfig,
-          });
-          console.log('Fallback response:', fallbackRes.data);
-          
-          const tripsData = extractTripsData(fallbackRes.data);
-          const normalizedTrips = normalizeTrips(tripsData);
-          console.log('Normalized trips from fallback:', normalizedTrips);
-          setTrips(normalizedTrips);
-        } catch (fallbackErr) {
-          console.error('All endpoints failed:', fallbackErr);
-          setError('Failed to load your trips. Please try again later.');
-        }
+      } else {
+        console.warn('Unexpected response format:', response.data);
+        setError('Failed to load trips. Please try again.');
       }
     } catch (error) {
-      console.error('Error in fetchTrips:', error);
-      setError('An unexpected error occurred. Please try again.');
-      // Set some sample data for development
-      setTrips([{
-        id: '1',
-        title: 'Sample Trip',
-        destination: 'Sample Destination',
-        start_date: new Date().toISOString(),
-        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'upcoming',
-        total_budget: 2500,
-        image_url: 'https://example.com/bali.jpg'
-      }]);
+      console.error('Error fetching trips:', error);
+      
+      // Provide more specific error messages
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
+        
+        if (error.response.status === 401) {
+          setError('Your session has expired. Please log in again.');
+        } else if (error.response.status === 403) {
+          setError('You do not have permission to view these trips.');
+        } else if (error.response.status >= 500) {
+          setError('Server error. Please try again later.');
+        } else {
+          setError('Failed to load trips. Please try again.');
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('No response received:', error.request);
+        setError('Unable to connect to the server. Please check your internet connection.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error setting up request:', error.message);
+        setError('An unexpected error occurred. Please try again.');
+      }
+      
+      // Clear trips on error
+      setTrips([]);
     } finally {
       setLoading(false);
     }

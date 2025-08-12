@@ -49,7 +49,7 @@ const UserProfile = () => {
         setPhotoPreview((response.data.user?.photo || response.data?.photo) || '');
       } catch (apiError) {
         console.warn('Primary API failed, falling back to direct URL', apiError);
-        const fallbackResponse = await axios.get('http://localhost:5000/api/user/profile', {
+        const fallbackResponse = await axios.get('http://localhost:5000/api/auth/me', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -133,7 +133,7 @@ const UserProfile = () => {
       } catch (apiError) {
         console.warn('Primary API failed, falling back to direct URL', apiError);
         // Fallback to old API URL
-        response = await axios.put('http://localhost:5000/api/user/profile', user, {
+        response = await axios.put('http://localhost:5000/api/auth/me', user, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
